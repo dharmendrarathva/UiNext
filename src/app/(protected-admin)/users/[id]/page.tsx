@@ -1,28 +1,62 @@
 import { connectDB } from "@/lib/db";
 import { User } from "@/models/User";
 import { UserActivity } from "@/models/UserActivity";
+import { Notification } from "@/models/Notification";
 import { notFound } from "next/navigation";
 import mongoose from "mongoose";
 import Image from "next/image";
+import AdminUserActions from "./user-actions";
 
-export default async function UserDetails({
-  params,
-}: {
+export const dynamic = "force-dynamic";
+
+interface Props {
   params: Promise<{ id: string }>;
-}) {
+}
+
+export default async function UserDetails({ params }: Props) {
   const { id } = await params;
 
   await connectDB();
 
-  if (!mongoose.Types.ObjectId.isValid(id)) notFound();
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    notFound();
+  }
 
   const user = await User.findById(id).lean();
   if (!user) notFound();
 
-  const activities = await UserActivity.find({ userId: id })
+  const activitiesRaw = await UserActivity.find({ userId: id })
     .sort({ createdAt: -1 })
-    .limit(10)
+    .limit(30)
     .lean();
+
+  const notificationsRaw = await Notification.find({ to: id })
+    .sort({ createdAt: -1 })
+    .limit(30)
+    .lean();
+
+  /* ================= SAFE SERIALIZATION ================= */
+
+  const activities = activitiesRaw.map((a: any) => ({
+    _id: a._id.toString(),
+    type: a.type,
+    createdAt: a.createdAt
+      ? new Date(a.createdAt).toISOString()
+      : null,
+  }));
+
+  const notifications = notificationsRaw.map((n: any) => ({
+    _id: n._id.toString(),
+    title: n.title,
+    message: n.message,
+    type: n.type,
+    createdAt: n.createdAt
+      ? new Date(n.createdAt).toISOString()
+      : null,
+  }));
+
+  const formatDate = (date?: Date | string | null) =>
+    date ? new Date(date).toISOString().split("T")[0] : "-";
 
   return (
     <div className="min-h-screen bg-black text-white p-10 space-y-12">
@@ -53,64 +87,59 @@ export default async function UserDetails({
       {/* ================= MAIN GRID ================= */}
       <div className="grid lg:grid-cols-3 gap-10">
 
-        {/* LEFT COLUMN */}
+        {/* ================= LEFT COLUMN ================= */}
         <div className="lg:col-span-2 space-y-8">
 
-         {/* Account Information */}
-<section className="bg-neutral-900 rounded-2xl p-8 space-y-8">
-  <h2 className="text-2xl font-semibold border-b border-neutral-800 pb-4">
-    Account Information
-  </h2>
+          {/* ACCOUNT INFORMATION */}
+          <section className="bg-neutral-900 rounded-2xl p-8 space-y-6">
+            <h2 className="text-2xl font-semibold border-b border-neutral-800 pb-4">
+              Account Information
+            </h2>
 
-  {/* Top Grid (Normal Fields) */}
-  <div className="grid sm:grid-cols-2 gap-6 text-sm">
+            <div className="grid sm:grid-cols-2 gap-6 text-sm">
+              <Info label="Role" value={user.role} />
 
-    <Info label="Role" value={user.role} />
+              <Info
+                label="Status"
+                value={
+                  <StatusBadge isBlocked={user.isBlocked} />
+                }
+              />
 
-    <Info
-      label="Status"
-      value={
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${
-            user.isBlocked
-              ? "bg-red-500/20 text-red-400"
-              : "bg-green-500/20 text-green-400"
-          }`}
-        >
-          {user.isBlocked ? "Blocked" : "Active"}
-        </span>
-      }
-    />
+              <Info
+                label="Deleted"
+                value={user.isDeleted ? "Yes" : "No"}
+              />
 
-    <Info
-      label="Deleted"
-      value={user.isDeleted ? "Yes" : "No"}
-    />
+              <Info
+                label="Block Reason"
+                value={user.blockReason || "-"}
+              />
 
-    <Info label="Block Reason" value={user.blockReason || "-"} />
+              <Info
+                label="Last Login IP"
+                value={user.lastLoginIP || "-"}
+              />
+            </div>
 
-    <Info label="Last Login IP" value={user.lastLoginIP || "-"} />
+            <div className="bg-neutral-800 border border-neutral-700 rounded-xl p-5">
+              <p className="text-neutral-400 text-sm mb-2">
+                Device Information
+              </p>
+              <p className="text-white text-sm break-words">
+                {user.lastLoginDevice || "Not Available"}
+              </p>
+            </div>
+          </section>
 
-  </div>
-
-  {/* Full Width Device Section */}
-  <div className="bg-neutral-900 border border-neutral-700 rounded-xl p-5">
-    <p className="text-neutral-400 text-sm mb-2">Device Information</p>
-    <p className="text-white text-sm break-words">
-      {user.lastLoginDevice || "Not Available"}
-    </p>
-  </div>
-
-</section>
-
-          {/* Bio & Website */}
+          {/* PROFILE DETAILS */}
           <section className="bg-neutral-900 rounded-2xl p-8 space-y-4">
             <h2 className="text-2xl font-semibold border-b border-neutral-800 pb-4">
               Profile Details
             </h2>
 
             <p className="text-neutral-300">
-              Bio : {user.bio || "No bio provided"}
+              Bio: {user.bio || "No bio provided"}
             </p>
 
             {user.website && (
@@ -119,12 +148,18 @@ export default async function UserDetails({
                 target="_blank"
                 className="text-neutral-300 hover:underline text-sm"
               >
-               Website :  {user.website}
+                Website: {user.website}
               </a>
             )}
           </section>
 
-          {/* Recent Activity */}
+          {/* ADMIN ACTIONS */}
+          <AdminUserActions
+            userId={id}
+            isBlocked={user.isBlocked}
+          />
+
+          {/* RECENT ACTIVITY */}
           <section className="bg-neutral-900 rounded-2xl p-8 space-y-6">
             <h2 className="text-2xl font-semibold border-b border-neutral-800 pb-4">
               Recent Activity
@@ -132,14 +167,16 @@ export default async function UserDetails({
 
             {activities.length > 0 ? (
               <div className="space-y-3">
-                {activities.map((act: any) => (
+                {activities.map((act) => (
                   <div
-                    key={act._id.toString()}
+                    key={act._id}
                     className="bg-neutral-800 p-4 rounded-xl text-sm flex justify-between"
                   >
                     <span>{act.type}</span>
                     <span className="text-neutral-500">
-                      {new Date(act.createdAt).toLocaleString()}
+                      {act.createdAt
+                        ? act.createdAt.split("T")[0]
+                        : "-"}
                     </span>
                   </div>
                 ))}
@@ -150,12 +187,44 @@ export default async function UserDetails({
               </p>
             )}
           </section>
+
+          {/* NOTIFICATIONS */}
+          <section className="bg-neutral-900 rounded-2xl p-8 space-y-6">
+            <h2 className="text-2xl font-semibold border-b border-neutral-800 pb-4">
+              Recent Notifications
+            </h2>
+
+            {notifications.length > 0 ? (
+              <div className="space-y-3">
+                {notifications.map((n) => (
+                  <div
+                    key={n._id}
+                    className="bg-neutral-800 p-4 rounded-xl text-sm"
+                  >
+                    <p className="font-semibold">{n.title}</p>
+                    <p className="text-neutral-400 mt-1">
+                      {n.message}
+                    </p>
+                    <p className="text-neutral-500 text-xs mt-2">
+                      {n.createdAt
+                        ? n.createdAt.split("T")[0]
+                        : "-"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-neutral-500 text-sm">
+                No notifications found
+              </p>
+            )}
+          </section>
         </div>
 
-        {/* RIGHT COLUMN */}
+        {/* ================= RIGHT COLUMN ================= */}
         <div className="space-y-8">
 
-          {/* Stats */}
+          {/* STATS */}
           <section className="bg-neutral-900 rounded-2xl p-8 space-y-6">
             <h2 className="text-2xl font-semibold border-b border-neutral-800 pb-4">
               Statistics
@@ -163,25 +232,11 @@ export default async function UserDetails({
 
             <Stat label="Followers" value={user.followersCount || 0} />
             <Stat label="Following" value={user.followingCount || 0} />
-            <Stat
-              label="Account Created"
-              value={
-                user.createdAt
-                  ? new Date(user.createdAt).toLocaleDateString()
-                  : "-"
-              }
-            />
-            <Stat
-              label="Last Updated"
-              value={
-                user.updatedAt
-                  ? new Date(user.updatedAt).toLocaleDateString()
-                  : "-"
-              }
-            />
+            <Stat label="Created" value={formatDate(user.createdAt)} />
+            <Stat label="Updated" value={formatDate(user.updatedAt)} />
           </section>
 
-          {/* Login Location */}
+          {/* LOCATION */}
           <section className="bg-neutral-900 rounded-2xl p-8 space-y-6">
             <h2 className="text-2xl font-semibold border-b border-neutral-800 pb-4">
               Last Login Location
@@ -202,13 +257,14 @@ export default async function UserDetails({
               </p>
             )}
           </section>
+
         </div>
       </div>
     </div>
   );
 }
 
-/* ================= REUSABLE COMPONENTS ================= */
+/* ================= SMALL COMPONENTS ================= */
 
 function Info({ label, value }: { label: string; value: any }) {
   return (
@@ -225,5 +281,19 @@ function Stat({ label, value }: { label: string; value: any }) {
       <span className="text-neutral-400">{label}</span>
       <span className="font-semibold">{value}</span>
     </div>
+  );
+}
+
+function StatusBadge({ isBlocked }: { isBlocked: boolean }) {
+  return (
+    <span
+      className={`px-3 py-1 rounded-full text-xs font-medium ${
+        isBlocked
+          ? "bg-red-500/20 text-red-400"
+          : "bg-green-500/20 text-green-400"
+      }`}
+    >
+      {isBlocked ? "Blocked" : "Active"}
+    </span>
   );
 }

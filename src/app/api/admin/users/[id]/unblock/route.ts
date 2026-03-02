@@ -11,18 +11,16 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params; // ✅ UNWRAP PARAMS
+  const { id } = await params; // ✅ Next 16 fix
 
   const session = await getServerSession(authOptions);
 
-  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN")) {
+  if (
+    !session ||
+    (session.user.role !== "ADMIN" &&
+      session.user.role !== "SUPERADMIN")
+  ) {
     return new Response("Unauthorized", { status: 401 });
-  }
-
-  const { reason } = await req.json();
-
-  if (!reason) {
-    return new Response("Block reason required", { status: 400 });
   }
 
   await connectDB();
@@ -32,24 +30,24 @@ export async function PATCH(
   }
 
   const user = await User.findById(id);
-
   if (!user) {
     return new Response("User not found", { status: 404 });
   }
 
-  user.isBlocked = true;
-  user.blockReason = reason;
+  user.isBlocked = false;
+  user.blockReason = null;
   await user.save();
 
-  // Auto create notification
+  /* ===== OPTIONAL: Create Notification ===== */
   await Notification.create({
     to: user._id,
     fromAdmin: session.user.id,
-    title: "Account Blocked",
-    message: reason,
-    type: "BLOCK_NOTICE",
+    title: "Account Restored",
+    message: "Your account has been restored by the administrator.",
+    type: "INFO",
   });
 
+  /* ===== OPTIONAL: Log Activity ===== */
   await UserActivity.create({
     userId: user._id,
     type: "PROFILE_UPDATE",

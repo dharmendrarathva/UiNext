@@ -7,30 +7,34 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  // 🔐 Admin validation (IMPORTANT)
+  const { id } = await params; // ✅ unwrap
+
   const session = await getServerSession(authOptions);
 
-  if (!session || session.user.role !== "ADMIN") {
+  if (!session || (session.user.role !== "ADMIN" && session.user.role !== "SUPERADMIN")) {
     return new Response("Unauthorized", { status: 401 });
   }
 
   const { title, message, type } = await req.json();
 
+  if (!title || !message) {
+    return new Response("Title and message required", { status: 400 });
+  }
+
   await connectDB();
 
-  // Validate Mongo ObjectId
-  if (!mongoose.Types.ObjectId.isValid(params.id)) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     return new Response("Invalid user id", { status: 400 });
   }
 
   await Notification.create({
-    to: params.id,
+    to: id,
     fromAdmin: session.user.id,
     title,
     message,
-    type,
+    type: type || "INFO",
   });
 
   return Response.json({ success: true });

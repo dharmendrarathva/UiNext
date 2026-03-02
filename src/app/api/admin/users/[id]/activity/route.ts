@@ -5,18 +5,17 @@ import mongoose from "mongoose";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   await connectDB();
 
-  // Validate Mongo ObjectId
-  if (!mongoose.Types.ObjectId.isValid(params.id)) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     return new Response("Invalid user id", { status: 400 });
   }
 
-  const activity = await UserActivity.find({
-    userId: params.id,
-  })
+  const activity = await UserActivity.find({ userId: id })
     .sort({ createdAt: -1 })
     .lean();
 
