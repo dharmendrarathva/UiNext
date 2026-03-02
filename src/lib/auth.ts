@@ -2,6 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { connectDB } from "./db";
 import { User } from "@/models/User";
+import { UserActivity } from "@/models/UserActivity";
+import { headers } from "next/headers";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -17,66 +19,106 @@ export const authOptions: NextAuthOptions = {
 
   secret: process.env.NEXTAUTH_SECRET,
 
-callbacks: {
-  async signIn({ user }) {
-    await connectDB();
-
-    let existingUser = await User.findOne({
-      email: user.email,
-    });
-
-    if (!existingUser) {
-      existingUser = await User.create({
-        name: user.name,
-        email: user.email,
-        image: user.image, // save google image
-      });
-    } else {
-      // Always sync latest google image
-      existingUser.image = user.image;
-      await existingUser.save();
-    }
-
-    if (existingUser.isBlocked || existingUser.isDeleted) {
-      return false;
-    }
-
-    return true;
-  },
-
-  async jwt({ token, user }) {
-    // First login
-    if (user) {
-    token.image = user.image ?? null;
-    }
-
-    // Always attach DB data
-    if (token.email) {
+  callbacks: {
+    /**
+     * 🔐 SIGN IN
+     * - Create user if not exists
+     * - Sync google image
+     * - Update login metadata
+     * - Log activity
+     */
+    async signIn({ user }) {
       await connectDB();
 
-      const dbUser = await User.findOne({
-        email: token.email,
+     const requestHeaders = await headers();
+
+const ip =
+  requestHeaders.get("x-forwarded-for") ??
+  requestHeaders.get("x-real-ip") ??
+  "unknown";
+
+const userAgent =
+  requestHeaders.get("user-agent") ?? "unknown-device";
+
+      let existingUser = await User.findOne({
+        email: user.email,
       });
 
-      if (dbUser) {
-        token.id = dbUser._id.toString();
-        token.role = dbUser.role;
-        token.isBlocked = dbUser.isBlocked;
-      token.image = dbUser.image ?? null;
+      if (!existingUser) {
+        existingUser = await User.create({
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          lastLoginAt: new Date(),
+          lastLoginIP: ip,
+          lastLoginDevice: userAgent,
+        });
+      } else {
+        if (existingUser.isBlocked || existingUser.isDeleted) {
+          return false;
+        }
+
+        // Sync Google image
+        existingUser.image = user.image;
+
+        // Update login metadata
+        existingUser.lastLoginAt = new Date();
+        existingUser.lastLoginIP = ip;
+        existingUser.lastLoginDevice = userAgent;
+
+        await existingUser.save();
       }
+
+      // Log activity (separate collection)
+      await UserActivity.create({
+        userId: existingUser._id,
+        ip,
+        device: userAgent,
+        type: "LOGIN",
+      });
+
+      return true;
+    },
+
+    /**
+     * 🧠 JWT
+     * Attach DB role + block status
+     */
+async jwt({ token, user }) {
+  if (user) {
+    token.image = user.image ?? null;
+  }
+
+  if (token.email) {
+    await connectDB();
+
+    const dbUser = await User.findOne({
+      email: token.email,
+    });
+
+    if (dbUser) {
+      token.id = dbUser._id.toString();
+      token.role = dbUser.role;
+      token.isBlocked = dbUser.isBlocked;
+      token.image = dbUser.image ?? null;
     }
+  }
 
-    return token;
-  },
-
-  async session({ session, token }) {
-    if (session.user) {
-      session.user.id = token.id as string;
-      session.user.role = token.role;
-      session.user.isBlocked = token.isBlocked;
-session.user.image = token.image ?? null;    }
-
-    return session;
-  },
+  return token;
 },
-}
+
+   
+    async session({ session, token }) {
+      if (!token?.id) return session;
+
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role;
+        session.user.isBlocked = token.isBlocked as boolean;
+        session.user.image = token.image ?? null;
+      }
+
+      return session;
+    },
+  },
+};

@@ -83,7 +83,7 @@ export default function UserMenu({ user }: UserMenuProps) {
               </Link>
 
               <Link
-                href="/admin/users"
+                href="/users"
                 className="block px-4 py-2 text-sm hover:bg-white/10"
                 onClick={() => setOpen(false)}
               >

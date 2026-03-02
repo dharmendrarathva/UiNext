@@ -86,6 +86,24 @@ const UserSchema = new Schema(
       type: Number,
       default: 0,
     },
+    lastLoginAt: {
+  type: Date,
+},
+
+lastLoginIP: {
+  type: String,
+},
+
+lastLoginDevice: {
+  type: String,
+},
+
+lastLoginLocation: {
+  lat: Number,
+  lng: Number,
+  country: String,
+  city: String,
+},
     
   },
   { timestamps: true }
