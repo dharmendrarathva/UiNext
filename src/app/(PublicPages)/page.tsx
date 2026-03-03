@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { connectDB } from "@/lib/db";
+import UsersList from "./users-list";
 
 import { FlipWords } from "@/components/ui/FlipWords";
 import { GridBackgroundDemo } from "@/components/ui/GridBackgroundDemo";
@@ -28,6 +30,11 @@ export default function Home() {
       <div className="absolute inset-0 -z-10">
         <GridBackgroundDemo />
       </div>
+
+      <div className="p-10 text-white">
+      <h1 className="text-3xl font-bold mb-8">All Users</h1>
+      <UsersList />
+    </div>
 
       {/* Content Layer */}
       <div className="  flex flex-col items-center pt-32 pb-20 px-6">

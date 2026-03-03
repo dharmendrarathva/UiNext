@@ -1,6 +1,3 @@
-
-
-
 export const dynamic = "force-dynamic";
 
 import { getServerSession } from "next-auth";
@@ -26,28 +23,33 @@ export default async function ProfilePage() {
     )
     .lean();
 
-  if (!dbUser) redirect("/login");
+  if (!dbUser) {
+    redirect("/login");
+  }
 
- const rawNotifications = await Notification.find({
-  to: session.user.id,
-})
-  .sort({ createdAt: -1 })
-  .limit(15)
-  .lean();
+  // Optional strict protection (recommended)
+  if (dbUser.isBlocked) {
+    redirect("/blocked");
+  }
 
-const notifications = rawNotifications.map((n: any) => ({
-  _id: n._id.toString(),
-  title: n.title,
-  message: n.message,
-  type: n.type,
-  isRead: n.isRead,
-  createdAt: n.createdAt
-    ? new Date(n.createdAt).toISOString()
-    : null,
-  updatedAt: n.updatedAt
-    ? new Date(n.updatedAt).toISOString()
-    : null,
-}));
+  /* ================= NOTIFICATIONS ================= */
+
+  const rawNotifications = await Notification.find({
+    to: session.user.id,
+  })
+    .sort({ createdAt: -1 })
+    .limit(15)
+    .lean();
+
+  const notifications = rawNotifications.map((n: any) => ({
+    _id: n._id.toString(),
+    title: n.title,
+    message: n.message,
+    type: n.type,
+    isRead: n.isRead,
+    createdAt: n.createdAt ? n.createdAt.toISOString() : null,
+    updatedAt: n.updatedAt ? n.updatedAt.toISOString() : null,
+  }));
 
   return (
     <div className="text-white px-10 py-10">
@@ -69,11 +71,11 @@ const notifications = rawNotifications.map((n: any) => ({
               followersCount: dbUser.followersCount ?? 0,
               followingCount: dbUser.followingCount ?? 0,
               createdAt: dbUser.createdAt
-  ? dbUser.createdAt.toISOString()
-  : null,
-updatedAt: dbUser.updatedAt
-  ? dbUser.updatedAt.toISOString()
-  : null,
+                ? dbUser.createdAt.toISOString()
+                : null,
+              updatedAt: dbUser.updatedAt
+                ? dbUser.updatedAt.toISOString()
+                : null,
               isBlocked: dbUser.isBlocked ?? false,
               blockReason: dbUser.blockReason ?? null,
               notifications,

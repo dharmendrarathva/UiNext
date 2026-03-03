@@ -58,7 +58,11 @@ export default function ProfileForm({ user }: Props) {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, bio, website }),
+        body: JSON.stringify({
+          username: username.trim().toLowerCase(),
+          bio: bio.trim(),
+          website: website.trim(),
+        }),
       });
 
       const data = await res.json();
@@ -95,10 +99,8 @@ export default function ProfileForm({ user }: Props) {
 
   return (
     <div className="space-y-10 max-w-6xl">
-
       {/* ================= ACCOUNT OVERVIEW ================= */}
       <section className="rounded-3xl border border-white/10 bg-neutral-950 p-10 shadow-xl">
-
         <div className="flex items-center justify-between mb-10">
           <h2 className="text-2xl font-semibold">Account Overview</h2>
 
@@ -145,7 +147,7 @@ export default function ProfileForm({ user }: Props) {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Input label="Username" value={username} onChange={(v) => setUsername(v.toLowerCase())} />
+          <Input label="Username" value={username} onChange={setUsername} />
           <Textarea label="Bio" value={bio} onChange={setBio} />
           <Input label="Website" value={website} onChange={setWebsite} />
 
@@ -165,7 +167,7 @@ export default function ProfileForm({ user }: Props) {
         </form>
       </section>
 
-      {/* ================= ACCOUNT STATUS ================= */}
+      {/* ================= ACCOUNT STATUS + NOTIFICATIONS ================= */}
       <section className="bg-neutral-950 border border-neutral-800 rounded-2xl p-8 space-y-6">
         <h2 className="text-yellow-400 font-semibold text-lg">
           Account Status
@@ -182,61 +184,60 @@ export default function ProfileForm({ user }: Props) {
           </div>
         )}
 
-        {/* Notifications */}
-      {/* Notifications */}
-<div>
-  <p className="text-sm text-neutral-400 mb-4">
-    Recent Notifications
-  </p>
+        <div>
+          <p className="text-sm text-neutral-400 mb-4">
+            Recent Notifications
+          </p>
 
-  {user.notifications && user.notifications.length > 0 ? (
-    <>
-      <div className="space-y-3">
-        {user.notifications
-          .slice(0, visibleCount)
-          .map((n) => (
-            <div
-              key={n._id}
-              className={`p-4 rounded-lg border ${getNotificationStyle(n.type)}`}
-            >
-              <div className="flex justify-between items-center">
-                <p className="font-medium">{n.title}</p>
-                {!n.isRead && (
-                  <span className="text-xs px-2 py-1 bg-white/10 rounded-full">
-                    New
-                  </span>
-                )}
+          {user.notifications && user.notifications.length > 0 ? (
+            <>
+              <div className="space-y-3">
+                {user.notifications
+                  .slice(0, visibleCount)
+                  .map((n) => (
+                    <div
+                      key={n._id}
+                      className={`p-4 rounded-lg border ${getNotificationStyle(
+                        n.type
+                      )}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <p className="font-medium">{n.title}</p>
+                        {!n.isRead && (
+                          <span className="text-xs px-2 py-1 bg-white/10 rounded-full">
+                            New
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-sm mt-1 opacity-80">
+                        {n.message}
+                      </p>
+
+                      <p className="text-xs mt-2 opacity-60">
+                        {formatDate(n.createdAt)}
+                      </p>
+                    </div>
+                  ))}
               </div>
 
-              <p className="text-sm mt-1 opacity-80">
-                {n.message}
-              </p>
-
-              <p className="text-xs mt-2 opacity-60">
-                {formatDate(n.createdAt)}
-              </p>
-            </div>
-          ))}
-      </div>
-
-      {/* Load More Button */}
-      {visibleCount < user.notifications.length && (
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => setVisibleCount((prev) => prev + 5)}
-            className="px-6 py-2 text-sm rounded-lg border border-neutral-700 hover:border-neutral-500 hover:text-neutral-200 transition"
-          >
-            Load More
-          </button>
+              {visibleCount < user.notifications.length && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => setVisibleCount((prev) => prev + 5)}
+                    className="px-6 py-2 text-sm rounded-lg border border-neutral-700 hover:border-neutral-500 transition"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-neutral-500 text-sm">
+              No notifications available.
+            </p>
+          )}
         </div>
-      )}
-    </>
-  ) : (
-    <p className="text-neutral-500 text-sm">
-      No notifications available.
-    </p>
-  )}
-</div>
       </section>
 
       {/* ================= LOGOUT ================= */}
@@ -252,12 +253,11 @@ export default function ProfileForm({ user }: Props) {
           Logout
         </button>
       </section>
-
     </div>
   );
 }
 
-/* ================= SMALL REUSABLE UI ================= */
+/* ================= REUSABLE UI ================= */
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (

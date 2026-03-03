@@ -23,6 +23,7 @@ export default async function ProtectedLayout({
         {children}
       </div>
     </div>
+    <Footer/>
   </>
 );
 }
