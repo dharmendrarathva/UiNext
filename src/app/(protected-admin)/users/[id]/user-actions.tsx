@@ -19,7 +19,6 @@ export default function AdminUserActions({ userId, isBlocked }: Props) {
   const [message, setMessage] = useState("");
   const [type, setType] = useState<NotificationType>("INFO");
 
-  /* ================= BLOCK USER ================= */
 
   const blockUser = async () => {
     if (!reason.trim()) {

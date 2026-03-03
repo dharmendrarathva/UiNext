@@ -1,60 +1,125 @@
+// "use client";
+
+// import Link from "next/link";
+// import { Session } from "next-auth";
+// import UserMenu from "@/components/layouts/UserMenu";
+
+// interface HeaderProps {
+//   session: Session | null;
+// }
+
+// export default function Header({ session }: HeaderProps) {
+//   return (
+    // <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/5 backdrop-blur-md">
+//       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
+//         {/* Logo */}
+//         <Link href="/" className="text-2xl font-semibold">
+//           UiSnap<span className="text-amber-500">.com</span>
+//         </Link>
+
+//         {/* Right Section */}
+//         <div className="flex items-center gap-4">
+
+//           {!session ? (
+//             <>
+//               <Link
+//                 href="/login?mode=login"
+//                 className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+//               >
+//                 Login
+//               </Link>
+
+//               <Link
+//                 href="/login?mode=register"
+//                 className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:bg-amber-400 transition"
+//               >
+//                 Register
+//               </Link>
+//             </>
+//           ) : (
+//             <UserMenu user={session.user} />
+//           )}
+
+//         </div>
+//       </div>
+//     </header>
+//   );
+// }
+
+
+
+
+
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { Session } from "next-auth";
 import UserMenu from "@/components/layouts/UserMenu";
-import AuthModal from "@/components/Overlays/AuthModal";
 
-export default function Header() {
-  const { data: session } = useSession();
-  const [authType, setAuthType] = useState<"login" | "register" | null>(null);
+interface HeaderProps {
+  session: Session | null;
+}
 
+export default function Header({ session }: HeaderProps) {
   return (
-    <>
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/5 backdrop-blur-sm text-white">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <header className="sticky top-0 z-80 w-full border-b border-white/10 bg-white/5 backdrop-blur-xs">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
-          <Link
-            href="/"
-            className="text-2xl font-semibold tracking-tight text-white"
-          >
-            UiSnap<span className="text-amber-500">.com</span>
-          </Link>
+        {/* Logo Left */}
+        <Link href="/" className="text-2xl font-semibold">
+          UiSnap<span className="text-amber-500">.com</span>
+        </Link>
 
-          <div className="flex items-center gap-4">
+        {/* Right Section */}
+        <div className="flex items-center gap-8">
 
-            {!session && (
-              <>
-                <button
-                  onClick={() => setAuthType("login")}
-                  className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg transition"
-                >
-                  Login
-                </button>
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center gap-6 text-sm text-neutral-400">
+            <Link href="/blog" className="hover:text-white transition">
+              Blog
+            </Link>
 
-                <button
-                  onClick={() => setAuthType("register")}
-                  className="px-4 py-2 text-sm bg-amber-500 hover:bg-amber-400 rounded-lg text-black font-semibold transition"
-                >
-                  Register
-                </button>
-              </>
-            )}
+            <Link href="/careers" className="hover:text-white transition">
+              Careers
+            </Link>
 
-            {session && <UserMenu user={session.user} />}
+            <Link href="/about" className="hover:text-white transition">
+              About
+            </Link>
 
-          </div>
+            <Link href="/contact" className="hover:text-white transition">
+              Contact
+            </Link>
+
+            <Link href="/license" className="hover:text-white transition">
+              License
+            </Link>
+          </nav>
+
+          {/* Auth / User */}
+          {!session ? (
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login?mode=login"
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
+              >
+                Login
+              </Link>
+
+              <Link
+                href="/login?mode=register"
+                className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:bg-amber-400 transition"
+              >
+                Register
+              </Link>
+            </div>
+          ) : (
+            <UserMenu user={session.user} />
+          )}
+
         </div>
-      </header>
-
-      {/* Modal */}
-      {authType && (
-        <AuthModal
-          type={authType}
-          onClose={() => setAuthType(null)}
-        />
-      )}
-    </>
+      </div>
+    </header>
   );
 }

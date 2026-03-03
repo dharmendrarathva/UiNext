@@ -1,4 +1,5 @@
-
+import Header from "@/components/layouts/Header";
+import Footer from "@/components/layouts/Footer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -11,14 +12,17 @@ export default async function ProtectedLayout({
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect("/login");
+    redirect("/");
   }
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="w-full max-w-6xl">
+  <>
+    <Header session={session} />
+    <div className="min-h-screen bg-neutral-950">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         {children}
       </div>
     </div>
-  );
+  </>
+);
 }

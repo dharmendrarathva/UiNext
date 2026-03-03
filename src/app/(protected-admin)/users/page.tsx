@@ -1,41 +1,4 @@
-// import { connectDB } from "@/lib/db";
-// import { User } from "@/models/User";
-// import Link from "next/link";
 
-// export default async function AdminUsersPage() {
-//   await connectDB();
-
-//   const users = await User.find({})
-//     .select("name email role isBlocked lastLoginAt")
-//     .lean();
-
-//   return (
-//     <div className="p-10 text-white">
-//       <h1 className="text-3xl font-bold mb-6">All Users</h1>
-
-//       <div className="space-y-4">
-//         {users.map((user: any) => (
-//           <div
-//             key={user._id}
-//             className="p-4 bg-neutral-900 rounded-xl flex justify-between"
-//           >
-//             <div>
-//               <p>{user.name}</p>
-//               <p className="text-sm text-neutral-400">{user.email}</p>
-//               <p className="text-xs text-neutral-500">
-//                 Last Login: {user.lastLoginAt?.toString()}
-//               </p>
-//             </div>
-
-//             <Link href={`/users/${user._id}`} className="text-blue-400">
-//               Manage
-//             </Link>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
 
 
 

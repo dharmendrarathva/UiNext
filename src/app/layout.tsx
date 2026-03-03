@@ -1,42 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-import Header from "@/components/layouts/Header";
-import Footer from "@/components/layouts/Footer";
 import Providers from "@/components/Providers";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "UiSnap",
   description: "Application",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-neutral-900 text-white`}
-      >
-        <Providers>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-1 px-6 py-10">{children}</main>
-            <Footer />
-          </div>
+      <body className="bg-black text-white min-h-screen antialiased">
+        <Providers session={session}>
+          {children}
         </Providers>
       </body>
     </html>
