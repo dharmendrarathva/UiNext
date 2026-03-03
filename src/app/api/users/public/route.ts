@@ -15,7 +15,7 @@ export async function GET() {
     isDeleted: false,
     isBlocked: false,
   })
-    .select("username image")
+.select("username name image")
     .lean();
 
   let followingIds: string[] = [];
@@ -35,7 +35,11 @@ export async function GET() {
       username: u.username,
       image: u.image ?? null,
       isFollowing: followingIds.includes(u._id.toString()),
+      name:u.name
     }));
 
   return NextResponse.json(formatted);
 }
+
+
+

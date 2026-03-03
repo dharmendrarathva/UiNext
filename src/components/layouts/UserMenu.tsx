@@ -67,11 +67,11 @@ export default function UserMenu({ user }: UserMenuProps) {
 
           {(user?.role === "ADMIN" || user?.role === "SUPERADMIN") && (
             <>
-              <Link href="/users" className="block px-4 py-2 text-sm hover:bg-white/10">
-                Admin Dashboard
-              </Link>
-              <Link href="/users" className="block px-4 py-2 text-sm hover:bg-white/10">
+              <Link href="/admin/users" className="block px-4 py-2 text-sm hover:bg-white/10">
                 Manage Users
+              </Link>
+              <Link href="/admin/categories" className="block px-4 py-2 text-sm hover:bg-white/10">
+                Manage Categories
               </Link>
             </>
           )}

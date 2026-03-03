@@ -117,7 +117,7 @@ export default async function AdminUsersPage() {
                   {/* ACTION */}
                   <td className="p-4 text-right">
                     <Link
-                      href={`/users/${user._id}`}
+                      href={`/admin/users/${user._id}`}
                       className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-xs transition"
                     >
                       Manage
