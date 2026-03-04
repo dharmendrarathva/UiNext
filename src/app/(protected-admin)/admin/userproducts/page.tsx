@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-const filters = ["ALL", "PENDING", "APPROVED", "REJECTED"];
-
+const filters = [
+  "ALL",
+  "DRAFT",
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "ARCHIVED",
+];
 export default function AdminProducts() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,19 +115,29 @@ export default function AdminProducts() {
               {p.description}
             </p>
 
-            {/* STATUS BADGE */}
-            <span
-              className={`inline-block text-xs px-2 py-1 rounded mb-3
-              ${
-                p.status === "PENDING"
-                  ? "bg-yellow-500 text-black"
-                  : p.status === "APPROVED"
-                  ? "bg-green-600"
-                  : "bg-red-600"
-              }`}
-            >
-              {p.status}
-            </span>
+    <span
+className={`inline-block text-xs px-2 py-1 rounded mb-3
+${
+p.status === "DRAFT"
+? "bg-gray-600"
+
+: p.status === "PENDING"
+? "bg-yellow-500 text-black"
+
+: p.status === "APPROVED"
+? "bg-green-600"
+
+: p.status === "REJECTED"
+? "bg-red-600"
+
+: p.isDeleted
+? "bg-purple-600"
+
+: ""
+}`}
+>
+{p.isDeleted ? "ARCHIVED" : p.status}
+</span>
 
             {/* USER INFO */}
             <div className="text-sm text-neutral-500 mb-4">

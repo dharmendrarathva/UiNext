@@ -9,6 +9,7 @@ export async function GET() {
     const products = await Product.find({
       status: "APPROVED",
       isDeleted: false,
+      
     })
       .populate("createdBy", "username")
       .sort({ createdAt: -1 });

@@ -31,11 +31,11 @@ export async function POST(req: Request) {
 
   const body = await req.json();
 
-  const product = await Product.create({
-    ...body,
-    createdBy: session.user.id,
-    status: "PENDING",
-  });
+ const product = await Product.create({
+  ...body,
+  createdBy: session.user.id,
+  status: body.status ?? "DRAFT",
+});
 
   return NextResponse.json(product);
 }

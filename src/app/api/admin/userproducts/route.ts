@@ -15,13 +15,23 @@ export async function GET(req: Request) {
   await connectDB();
 
   const { searchParams } = new URL(req.url);
-
   const status = searchParams.get("status");
 
-  const query: any = { isDeleted: false };
+  const query: any = {};
 
-  if (status && status !== "ALL") {
-    query.status = status;
+  //////////////////////////////////////////////////////
+  // FILTER LOGIC
+  //////////////////////////////////////////////////////
+
+  if (status === "ARCHIVED") {
+    query.isDeleted = true;
+  } 
+  else {
+    query.isDeleted = false;
+
+    if (status && status !== "ALL") {
+      query.status = status;
+    }
   }
 
   const products = await Product.find(query)

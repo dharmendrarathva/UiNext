@@ -22,6 +22,7 @@ export async function GET(
     createdBy: user._id,
     status: "APPROVED",
     isDeleted: false,
+    
   }).populate("createdBy", "username avatar");
 
   if (!product) {
