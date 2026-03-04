@@ -73,6 +73,9 @@ export default function UserMenu({ user }: UserMenuProps) {
               <Link href="/admin/categories" className="block px-4 py-2 text-sm hover:bg-white/10">
                 Manage Categories
               </Link>
+               <Link href="/admin/userproducts" className="block px-4 py-2 text-sm hover:bg-white/10">
+                Manage Products
+              </Link>
             </>
           )}
 
