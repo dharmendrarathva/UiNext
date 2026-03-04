@@ -1,37 +1,35 @@
 import mongoose, { Schema, models, model } from "mongoose";
-
-export enum ProductStatus {
-  DRAFT = "DRAFT",
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  ARCHIVED = "ARCHIVED",
-}
-
-export enum VisibilityStatus {
-  PRIVATE = "PRIVATE",
-  PUBLIC = "PUBLIC",
-}
+import { ProductStatus } from "@/lib/product-status";
 
 const ProductSchema = new Schema(
   {
-    owner: {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
+
+    description: {
+      type: String,
+      required: true,
+    },
+
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    thumbnail: String,
+
+    files: [String],
+
+    createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
-    },
-
-    category: {
-      type: Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
-      index: true,
-    },
-
-    currentVersion: {
-      type: Schema.Types.ObjectId,
-      ref: "ProductVersion",
     },
 
     status: {
@@ -41,34 +39,54 @@ const ProductSchema = new Schema(
       index: true,
     },
 
-    visibility: {
-      type: String,
-      enum: Object.values(VisibilityStatus),
-      default: VisibilityStatus.PRIVATE,
-      index: true,
-    },
-
     rejectionReason: {
       type: String,
+      default: null,
     },
 
-    likesCount: { type: Number, default: 0 },
-    favoritesCount: { type: Number, default: 0 },
-    commentsCount: { type: Number, default: 0 },
-    viewsCount: { type: Number, default: 0 },
+    likesCount: {
+      type: Number,
+      default: 0,
+    },
+
+    favoritesCount: {
+      type: Number,
+      default: 0,
+    },
+
+    commentsCount: {
+      type: Number,
+      default: 0,
+    },
+
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
 
     isDeleted: {
       type: Boolean,
       default: false,
       index: true,
     },
+    slug: {
+  type: String,
+  required: true,
+  lowercase: true,
+  index: true,
+},
+
+    deletedAt: Date,
   },
   { timestamps: true }
 );
 
-// Feed optimization
-ProductSchema.index({ status: 1, visibility: 1, createdAt: -1 });
-ProductSchema.index({ owner: 1, createdAt: -1 });
+ProductSchema.index({ createdBy: 1, createdAt: -1 });
+ProductSchema.index({ status: 1, createdAt: -1 });
+ProductSchema.index(
+  { createdBy: 1, slug: 1 },
+  { unique: true }
+);
 
 export const Product =
   models.Product || model("Product", ProductSchema);
