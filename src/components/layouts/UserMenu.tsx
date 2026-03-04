@@ -10,6 +10,8 @@ interface UserMenuProps {
   user: Session["user"];
 }
 
+
+
 export default function UserMenu({ user }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -58,6 +60,9 @@ export default function UserMenu({ user }: UserMenuProps) {
             <>
               <Link href="/profile" className="block px-4 py-2 text-sm hover:bg-white/10">
                 Profile
+              </Link>
+               <Link href="/myproducts" className="block px-4 py-2 text-sm hover:bg-white/10">
+                My Products
               </Link>
               <Link href="/dashboard" className="block px-4 py-2 text-sm hover:bg-white/10">
                 Dashboard

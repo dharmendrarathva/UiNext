@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session) return NextResponse.json({}, { status: 401 });
@@ -14,10 +14,19 @@ export async function GET() {
 
   await connectDB();
 
-  const products = await Product.find({
-    status: "PENDING",
-    isDeleted: false,
-  }).populate("createdBy", "username email");
+  const { searchParams } = new URL(req.url);
+
+  const status = searchParams.get("status");
+
+  const query: any = { isDeleted: false };
+
+  if (status && status !== "ALL") {
+    query.status = status;
+  }
+
+  const products = await Product.find(query)
+    .populate("createdBy", "username email")
+    .sort({ createdAt: -1 });
 
   return NextResponse.json(products);
 }
