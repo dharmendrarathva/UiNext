@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function ProductPage({
   params,
@@ -17,6 +18,8 @@ export default function ProductPage({
   const [inCart, setInCart] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showCartPopup, setShowCartPopup] = useState(false);
+  const { data: session } = useSession();
+const [showLoginPopup,setShowLoginPopup] = useState(false);
 
   /* ---------------- LOAD DATA ---------------- */
 
@@ -50,18 +53,26 @@ export default function ProductPage({
 
   /* ---------------- ADD TO CART ---------------- */
 
-  async function addToCart() {
-    await fetch("/api/cart/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ productId: product._id }),
-    });
+async function addToCart() {
 
-    setInCart(true);
-    setShowCartPopup(true);
+  if (!session) {
+    setShowLoginPopup(true);
+    return;
   }
+
+  await fetch("/api/cart/add", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      productId: product._id,
+    }),
+  });
+
+  setInCart(true);
+  setShowCartPopup(true);
+}
 
   /* ---------------- REMOVE CART ---------------- */
 
@@ -247,6 +258,50 @@ export default function ProductPage({
 
     </div>
   </div>
+)}
+
+
+{showLoginPopup && (
+
+<div className="fixed inset-0 flex items-center justify-center z-50">
+
+<div
+className="absolute inset-0 bg-black/50"
+onClick={()=>setShowLoginPopup(false)}
+/>
+
+<div className="relative bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-80">
+
+<h3 className="text-lg font-semibold mb-3 text-center">
+Login Required
+</h3>
+
+<p className="text-neutral-400 text-sm text-center mb-6">
+You must login to add items to cart.
+</p>
+
+<div className="flex gap-3">
+
+<Link
+href="/login?mode=login"
+className="flex-1 text-center bg-yellow-500 text-black py-2 rounded-lg hover:bg-yellow-400 transition"
+>
+Login Now
+</Link>
+
+<button
+onClick={()=>setShowLoginPopup(false)}
+className="flex-1 bg-neutral-800 text-white py-2 rounded-lg hover:bg-neutral-700"
+>
+Cancel
+</button>
+
+</div>
+
+</div>
+
+</div>
+
 )}
 
     </div>

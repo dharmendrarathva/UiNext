@@ -84,12 +84,12 @@ export default function AdminProducts() {
       </div>
 
       {loading && (
-        <p className="text-neutral-400">Loading products...</p>
+        <p className="text-neutral-400 justify-center items-center">Loading products...</p>
       )}
 
       {products.length === 0 && !loading && (
         <p className="text-neutral-500">
-          No products found
+          No products found 
         </p>
       )}
 

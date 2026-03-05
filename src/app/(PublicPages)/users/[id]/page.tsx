@@ -65,15 +65,17 @@ const [user, setUser] = useState<UserProfile | null>(null);
   router.push(`/login?mode=login&callbackUrl=${encodeURIComponent(callback)}`);
 }
 
-  function handleFollowChange(isFollowing: boolean) {
+function handleFollowChange(isFollowing: boolean) {
   setUser((prev) => {
     if (!prev) return prev;
 
+    const newFollowers = isFollowing
+      ? prev.followersCount + 1
+      : Math.max(prev.followersCount - 1, 0);
+
     return {
       ...prev,
-      followersCount: isFollowing
-        ? prev.followersCount + 1
-        : prev.followersCount - 1,
+      followersCount: newFollowers,
       isFollowing,
     };
   });
@@ -120,10 +122,11 @@ const [user, setUser] = useState<UserProfile | null>(null);
                {session?.user?.id !== user._id && (
   session ? (
     <FollowButton
-      targetUserId={user._id}
-      initialIsFollowing={user.isFollowing}
-      onFollowChange={handleFollowChange}
-    />
+  targetUserId={user._id}
+  profileName={user.username}
+  initialIsFollowing={user.isFollowing}
+  onFollowChange={handleFollowChange}
+/>
   ) : (
     <button
       onClick={handleFollowClick}

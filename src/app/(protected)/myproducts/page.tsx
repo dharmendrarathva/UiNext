@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PolicyToUpload from "@/components/Overlays/PolicyToUpload";
+
 
 interface Product {
   _id: string;
@@ -25,12 +27,21 @@ export default function MyProducts() {
 
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
+  const [showPolicy, setShowPolicy] = useState(false);
+
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [filter, setFilter] = useState<
+  "ALL" | "APPROVED" | "PENDING" | "DRAFT" | "REJECTED"
+>("ALL");
 
-  //////////////////////////////////////////////////////
-  // LOAD PRODUCTS
-  //////////////////////////////////////////////////////
+
+
+const filteredProducts =
+  filter === "ALL"
+    ? products
+    : products.filter((p) => p.status === filter);
+
 
   async function loadProducts() {
     const res = await fetch("/api/users/products");
@@ -42,9 +53,6 @@ export default function MyProducts() {
     loadProducts();
   }, []);
 
-  //////////////////////////////////////////////////////
-  // FORM HANDLER
-  //////////////////////////////////////////////////////
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -60,9 +68,6 @@ export default function MyProducts() {
 
   }
 
-  //////////////////////////////////////////////////////
-  // CREATE PRODUCT
-  //////////////////////////////////////////////////////
 
   async function createProduct(status: "DRAFT" | "PENDING") {
 
@@ -88,9 +93,6 @@ export default function MyProducts() {
     loadProducts();
   }
 
-  //////////////////////////////////////////////////////
-  // START EDIT
-  //////////////////////////////////////////////////////
 
   function startEdit(product: Product) {
 
@@ -105,9 +107,6 @@ export default function MyProducts() {
     setEditModal(true);
   }
 
-  //////////////////////////////////////////////////////
-  // UPDATE PRODUCT
-  //////////////////////////////////////////////////////
 
   async function updateProduct() {
 
@@ -131,10 +130,6 @@ export default function MyProducts() {
     loadProducts();
   }
 
-  //////////////////////////////////////////////////////
-  // DELETE PRODUCT
-  //////////////////////////////////////////////////////
-
   async function deleteProduct(id: string) {
 
     await fetch(`/api/users/products/${id}`, {
@@ -144,9 +139,6 @@ export default function MyProducts() {
     loadProducts();
   }
 
-  //////////////////////////////////////////////////////
-  // STATUS BADGE
-  //////////////////////////////////////////////////////
 
   function statusBadge(status: string) {
 
@@ -162,9 +154,6 @@ export default function MyProducts() {
     return "bg-yellow-500/20 text-yellow-400";
   }
 
-  //////////////////////////////////////////////////////
-  // UI
-  //////////////////////////////////////////////////////
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white p-10">
@@ -176,9 +165,16 @@ export default function MyProducts() {
         <h1 className="text-3xl font-bold text-yellow-400">
           My Products
         </h1>
+   <PolicyToUpload
+  open={showPolicy}
+  onClose={() => {
+    setShowPolicy(false);
+    setCreateModal(true); // open create modal after policy
+  }}
+/>
 
         <button
-          onClick={() => setCreateModal(true)}
+          onClick={() => setShowPolicy(true)}
           className="bg-yellow-500 hover:bg-yellow-600 px-5 py-2 rounded-lg font-semibold"
         >
           + Create Product
@@ -186,12 +182,34 @@ export default function MyProducts() {
 
       </div>
 
+
+
+      <div className="flex flex-wrap gap-3 mb-8">
+
+  {["ALL","APPROVED","PENDING","DRAFT","REJECTED"].map((status) => (
+
+    <button
+      key={status}
+      onClick={() => setFilter(status as any)}
+      className={`px-4 py-2 rounded-lg text-sm font-medium transition
+        ${
+          filter === status
+            ? "bg-yellow-500 text-black"
+            : "bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
+        }`}
+    >
+      {status}
+    </button>
+
+  ))}
+
+</div>
+
       {/* PRODUCT GRID */}
 
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-        {products.map((p) => (
-
+{filteredProducts.map((p) => (
           <div
             key={p._id}
             className="bg-neutral-900 border border-neutral-800 rounded-xl p-6"

@@ -54,7 +54,7 @@ export default async function ProfilePage() {
   return (
     <div className="text-white px-10 py-10">
       <div className="max-w-6xl">
-        <h1 className="text-4xl font-bold">Settings</h1>
+        <h1 className="text-4xl font-bold">Profile Settings</h1>
         <p className="text-neutral-400 mt-2">
           Manage your account preferences and profile information.
         </p>

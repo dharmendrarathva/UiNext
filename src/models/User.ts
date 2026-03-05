@@ -1,15 +1,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
 import mongoose, { Schema, models, model } from "mongoose";
 
 export enum UserRole {

@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession, signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+
 
 interface Product {
   _id: string;
@@ -30,24 +33,45 @@ interface Cart {
 export default function MyCart() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
+    const { data: session, status } = useSession();
+  const router = useRouter();
 
-  async function loadCart() {
+ async function loadCart() {
+
     try {
+
       const res = await fetch("/api/cart");
-      if (!res.ok) throw new Error("Failed to load cart");
+
+      if (!res.ok) throw new Error();
+
       const data = await res.json();
+
       setCart(data);
+
     } catch (err) {
-      console.error("Cart load error:", err);
+
+      console.error(err);
+
     } finally {
+
       setLoading(false);
+
     }
   }
 
-  useEffect(() => {
-    loadCart();
-  }, []);
 
+ useEffect(() => {
+
+    if (status === "loading") return;
+
+    if (!session) {
+      router.push("/login?mode=login");
+      return;
+    }
+
+    loadCart();
+
+  }, [session, status]);
 
   async function removeFromCart(productId: string) {
   try {
@@ -76,13 +100,10 @@ export default function MyCart() {
 
   /* ---------------- Loading State ---------------- */
 
-  if (loading) {
-    return (
-      <div className="p-10 text-neutral-400">
-        Loading cart...
-      </div>
-    );
+  if (status === "loading" || loading) {
+    return <div className="p-10 text-neutral-400">Loading cart...</div>;
   }
+
 
   /* ---------------- Empty Cart ---------------- */
 

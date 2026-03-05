@@ -9,10 +9,12 @@ export async function GET() {
 
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ items: [] });
-  }
-
+ if (!session?.user?.id) {
+  return NextResponse.json(
+    { error: "Unauthorized" },
+    { status: 401 }
+  );
+}
   const cart = await Cart.findOne({ user: session.user.id })
     .populate({
   path: "items.product",
