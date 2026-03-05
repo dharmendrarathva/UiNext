@@ -12,7 +12,6 @@ interface ProductDoc {
   description: string;
   price: number;
   thumbnail?: string;
-  files?: string[];
   createdBy: mongoose.Types.ObjectId;
   status: ProductStatus;
   rejectionReason?: string | null;
@@ -56,7 +55,6 @@ const ProductSchema = new Schema<ProductDoc>(
 
     thumbnail: String,
 
-    files: [String],
 
     createdBy: {
       type: Schema.Types.ObjectId,

@@ -23,7 +23,7 @@ export async function GET(
     status: "APPROVED",
     isDeleted: false,
     
-  }).populate("createdBy", "username avatar");
+  }).populate("createdBy", "username image name");
 
   if (!product) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });

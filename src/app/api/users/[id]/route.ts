@@ -2,6 +2,9 @@ import { connectDB } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { User } from "@/models/User";
 import { Product } from "@/models/Product";
+import { Follow } from "@/models/Follow";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(
   req: Request,
@@ -11,12 +14,26 @@ export async function GET(
 
   await connectDB();
 
+  const session = await getServerSession(authOptions);
+  const currentUserId = session?.user?.id;
+
   const user = await User.findById(id).select(
     "name username image bio website followersCount followingCount"
   );
 
   if (!user) {
     return NextResponse.json({}, { status: 404 });
+  }
+
+  let isFollowing = false;
+
+  if (currentUserId) {
+    const follow = await Follow.findOne({
+      follower: currentUserId,
+      following: id,
+    });
+
+    isFollowing = !!follow;
   }
 
   const products = await Product.find({
@@ -28,7 +45,10 @@ export async function GET(
     .sort({ createdAt: -1 });
 
   return NextResponse.json({
-    user,
+    user: {
+      ...user.toObject(),
+      isFollowing,
+    },
     products,
   });
 }

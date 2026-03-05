@@ -1,60 +1,8 @@
-// "use client";
-
-// import Link from "next/link";
-// import { Session } from "next-auth";
-// import UserMenu from "@/components/layouts/UserMenu";
-
-// interface HeaderProps {
-//   session: Session | null;
-// }
-
-// export default function Header({ session }: HeaderProps) {
-//   return (
-    // <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-white/5 backdrop-blur-md">
-//       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-
-//         {/* Logo */}
-//         <Link href="/" className="text-2xl font-semibold">
-//           UiSnap<span className="text-amber-500">.com</span>
-//         </Link>
-
-//         {/* Right Section */}
-//         <div className="flex items-center gap-4">
-
-//           {!session ? (
-//             <>
-//               <Link
-//                 href="/login?mode=login"
-//                 className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition"
-//               >
-//                 Login
-//               </Link>
-
-//               <Link
-//                 href="/login?mode=register"
-//                 className="px-4 py-2 bg-amber-500 text-black rounded-lg hover:bg-amber-400 transition"
-//               >
-//                 Register
-//               </Link>
-//             </>
-//           ) : (
-//             <UserMenu user={session.user} />
-//           )}
-
-//         </div>
-//       </div>
-//     </header>
-//   );
-// }
-
-
-
-
-
 "use client";
 
 import Link from "next/link";
 import { Session } from "next-auth";
+import { FaShoppingCart } from "react-icons/fa";
 import UserMenu from "@/components/layouts/UserMenu";
 
 interface HeaderProps {
@@ -66,12 +14,11 @@ export default function Header({ session }: HeaderProps) {
     <header className="sticky top-0 z-80 w-full border-b border-white/10 bg-white/5 backdrop-blur-xs">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
-        {/* Logo Left */}
+        {/* Logo */}
         <Link href="/" className="text-2xl font-semibold">
           UiSnap<span className="text-amber-500">.com</span>
         </Link>
 
-        {/* Right Section */}
         <div className="flex items-center gap-8">
 
           {/* Navigation */}
@@ -97,7 +44,7 @@ export default function Header({ session }: HeaderProps) {
             </Link>
           </nav>
 
-          {/* Auth / User */}
+          {/* Right Section */}
           {!session ? (
             <div className="flex items-center gap-3">
               <Link
@@ -115,7 +62,20 @@ export default function Header({ session }: HeaderProps) {
               </Link>
             </div>
           ) : (
-            <UserMenu user={session.user} />
+            <div className="flex items-center gap-5">
+
+              {/* Cart Icon */}
+              <Link
+                href="/mycart"
+                className="text-neutral-400 hover:text-white transition text-lg"
+              >
+                <FaShoppingCart />
+              </Link>
+
+              {/* User Menu */}
+              <UserMenu user={session.user} />
+
+            </div>
           )}
 
         </div>
