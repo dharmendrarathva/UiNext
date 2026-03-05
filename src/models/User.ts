@@ -67,6 +67,20 @@ const UserSchema = new Schema(
       type: String,
       trim: true,
     },
+    policyAccepted: {
+  type: Boolean,
+  default: false,
+  index: true,
+},
+
+policyAcceptedAt: {
+  type: Date,
+},
+
+policyVersion: {
+  type: String,
+  default: "v1",
+},
 
     followersCount: {
       type: Number,

@@ -28,7 +28,7 @@ export default function MyProducts() {
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
-
+const [policyAccepted, setPolicyAccepted] = useState<boolean | null>(null);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [filter, setFilter] = useState<
@@ -43,15 +43,39 @@ const filteredProducts =
     : products.filter((p) => p.status === filter);
 
 
+async function checkPolicy() {
+  try {
+
+    const res = await fetch("/api/users/policy");
+
+    if (!res.ok) {
+      setPolicyAccepted(false);
+      return;
+    }
+
+    const data = await res.json();
+
+    setPolicyAccepted(Boolean(data.policyAccepted));
+
+  } catch (error) {
+
+    console.error("Policy check failed:", error);
+    setPolicyAccepted(false);
+
+  }
+}
+
+
   async function loadProducts() {
     const res = await fetch("/api/users/products");
     const data = await res.json();
     setProducts(data);
   }
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
+useEffect(() => {
+  loadProducts();
+  checkPolicy();
+}, []);
 
 
   function handleChange(
@@ -165,20 +189,28 @@ const filteredProducts =
         <h1 className="text-3xl font-bold text-yellow-400">
           My Products
         </h1>
-   <PolicyToUpload
+<PolicyToUpload
   open={showPolicy}
-  onClose={() => {
+  onClose={() => setShowPolicy(false)}
+  onAccepted={() => {
     setShowPolicy(false);
-    setCreateModal(true); // open create modal after policy
+    setPolicyAccepted(true);
+    setCreateModal(true);
   }}
 />
 
-        <button
-          onClick={() => setShowPolicy(true)}
-          className="bg-yellow-500 hover:bg-yellow-600 px-5 py-2 rounded-lg font-semibold"
-        >
-          + Create Product
-        </button>
+    <button
+  onClick={() => {
+    if (!policyAccepted) {
+      setShowPolicy(true);
+    } else {
+      setCreateModal(true);
+    }
+  }}
+  className="bg-yellow-500 hover:bg-yellow-600 px-5 py-2 rounded-lg font-semibold"
+>
+  + Create Product
+</button>
 
       </div>
 
