@@ -8,8 +8,10 @@ import { Notification } from "@/models/Notification";
 import { redirect } from "next/navigation";
 import ProfileForm from "./profile-form";
 
+
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
+  
 
   if (!session?.user?.id) {
     redirect("/login");
@@ -62,6 +64,8 @@ export default async function ProfilePage() {
         <div className="mt-10">
           <ProfileForm
             user={{
+                  id: session.user.id,   // ✅ ADD THIS
+
               email: session.user.email ?? "",
               image: session.user.image ?? null,
               name: dbUser.name ?? "",

@@ -2,9 +2,7 @@ import mongoose, { Schema, models, model, HydratedDocument } from "mongoose";
 import slugify from "slugify";
 import { ProductStatus } from "@/lib/product-status";
 
-//////////////////////////////////////////////////////
-// DOCUMENT TYPE
-//////////////////////////////////////////////////////
+
 
 interface ProductDoc {
   title: string;
@@ -23,9 +21,7 @@ interface ProductDoc {
   deletedAt?: Date;
 }
 
-//////////////////////////////////////////////////////
-// SCHEMA
-//////////////////////////////////////////////////////
+
 
 const ProductSchema = new Schema<ProductDoc>(
   {

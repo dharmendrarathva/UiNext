@@ -4,6 +4,8 @@ import { useState } from "react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
 
+import FollowList from "./followlist";
+
 /* ================= TYPES ================= */
 
 type NotificationType = "WARNING" | "INFO" | "BLOCK_NOTICE";
@@ -18,6 +20,7 @@ interface NotificationItem {
 }
 
 interface UserData {
+  id: string;
   email: string;
   image?: string | null;
   name?: string;
@@ -51,6 +54,7 @@ export default function ProfileForm({ user }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
     setMessage("");
 
@@ -100,6 +104,7 @@ export default function ProfileForm({ user }: Props) {
   return (
     <div className="space-y-10 max-w-6xl">
       {/* ================= ACCOUNT OVERVIEW ================= */}
+
       <section className="rounded-3xl border border-white/10 bg-neutral-950 p-10 shadow-xl">
         <div className="flex items-center justify-between mb-10">
           <h2 className="text-2xl font-semibold">Account Overview</h2>
@@ -133,14 +138,29 @@ export default function ProfileForm({ user }: Props) {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Stat label="Followers" value={user.followersCount ?? 0} />
-          <Stat label="Following" value={user.followingCount ?? 0} />
+
+          {/* FOLLOWERS MODAL */}
+          <FollowList
+            userId={user.id}
+            type="followers"
+            count={user.followersCount ?? 0}
+          />
+
+          {/* FOLLOWING MODAL */}
+          <FollowList
+            userId={user.id}
+            type="following"
+            count={user.followingCount ?? 0}
+          />
+
           <Stat label="Created" value={formatDate(user.createdAt)} />
           <Stat label="Updated" value={formatDate(user.updatedAt)} />
+
         </div>
       </section>
 
       {/* ================= EDIT PROFILE ================= */}
+
       <section className="bg-neutral-950 border border-neutral-800 rounded-2xl p-8">
         <h2 className="text-yellow-400 font-semibold text-lg mb-6">
           Edit Profile
@@ -148,7 +168,9 @@ export default function ProfileForm({ user }: Props) {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input label="Username" value={username} onChange={setUsername} />
+
           <Textarea label="Bio" value={bio} onChange={setBio} />
+
           <Input label="Website" value={website} onChange={setWebsite} />
 
           <div className="flex items-center gap-4">
@@ -168,6 +190,7 @@ export default function ProfileForm({ user }: Props) {
       </section>
 
       {/* ================= ACCOUNT STATUS + NOTIFICATIONS ================= */}
+
       <section className="bg-neutral-950 border border-neutral-800 rounded-2xl p-8 space-y-6">
         <h2 className="text-yellow-400 font-semibold text-lg">
           Account Status
@@ -176,6 +199,7 @@ export default function ProfileForm({ user }: Props) {
         {user.isBlocked && (
           <div className="bg-red-600/10 border border-red-600/30 p-4 rounded-lg">
             <p className="text-red-400 font-medium">Account Blocked</p>
+
             {user.blockReason && (
               <p className="text-sm text-neutral-400 mt-1">
                 Reason: {user.blockReason}
@@ -203,6 +227,7 @@ export default function ProfileForm({ user }: Props) {
                     >
                       <div className="flex justify-between items-center">
                         <p className="font-medium">{n.title}</p>
+
                         {!n.isRead && (
                           <span className="text-xs px-2 py-1 bg-white/10 rounded-full">
                             New
@@ -241,6 +266,7 @@ export default function ProfileForm({ user }: Props) {
       </section>
 
       {/* ================= LOGOUT ================= */}
+
       <section className="bg-red-950/70 border border-neutral-700 rounded-2xl p-8">
         <h2 className="text-red-400 font-semibold text-lg mb-4">
           Danger Zone
@@ -280,6 +306,7 @@ function Input({
   return (
     <div>
       <label className="block text-sm text-neutral-400 mb-2">{label}</label>
+
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -301,6 +328,7 @@ function Textarea({
   return (
     <div>
       <label className="block text-sm text-neutral-400 mb-2">{label}</label>
+
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}

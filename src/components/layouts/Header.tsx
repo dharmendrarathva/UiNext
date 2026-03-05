@@ -23,6 +23,9 @@ export default function Header({ session }: HeaderProps) {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6 text-sm text-neutral-400">
+             <Link href="/allproducts" className="hover:text-white transition">
+              Components
+            </Link>
             <Link href="/blog" className="hover:text-white transition">
               Blog
             </Link>
