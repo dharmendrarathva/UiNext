@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import FollowButton from "@/components/small/FollowButton";
 
 interface UserItem {
   _id: string;
@@ -28,10 +27,7 @@ export default function UsersList() {
         >
           <span>{user.username}</span>
 
-          <FollowButton
-            targetUserId={user._id}
-            initialIsFollowing={user.isFollowing}
-          />
+         
         </div>
       ))}
     </div>
