@@ -13,33 +13,62 @@ export default function ProductPage({
   const { username, productSlug } = use(params);
 
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [product, setProduct] = useState<any>(null);
-  const [inCart, setInCart] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [showCartPopup, setShowCartPopup] = useState(false);
-  const { data: session } = useSession();
-const [showLoginPopup,setShowLoginPopup] = useState(false);
 
-  /* ---------------- LOAD DATA ---------------- */
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const [likesCount, setLikesCount] = useState(0);
+  const [savesCount, setSavesCount] = useState(0);
+  const [views, setViews] = useState(0);
+
+  const [inCart, setInCart] = useState(false);  
+
+  const [loading, setLoading] = useState(true);
+
+  const [showCartPopup, setShowCartPopup] = useState(false);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+
+  //////////////////////////////////////////////////////
+  // LOAD DATA
+  //////////////////////////////////////////////////////
 
   async function loadData() {
     try {
-      const [productRes, cartRes] = await Promise.all([
+      const [productRes, cartRes, likeRes, favRes] = await Promise.all([
         fetch(`/api/products/${username}/${productSlug}`),
         fetch("/api/cart"),
+        fetch("/api/likes"),
+        fetch("/api/favorites"),
+
       ]);
 
       const productData = await productRes.json();
       const cartData = await cartRes.json();
+      const likeData = await likeRes.json();
+      const favData = await favRes.json();
+
 
       setProduct(productData);
 
-      const exists = cartData.items?.some(
-        (item: any) => item.product._id === productData._id
-      );
+      setLikesCount(productData.likesCount || 0);
+      setSavesCount(productData.favoritesCount || 0);
+      setViews(productData.viewsCount || 0);
 
-      setInCart(exists);
+ const cartExists =
+  cartData.items?.some(
+    (item: any) => item.product?._id === productData?._id
+  ) ?? false;
+
+      setInCart(cartExists);
+
+      const likedIds = likeData.map((l: any) => l.product._id);
+      const savedIds = favData.map((f: any) => f.product._id);
+
+      setLiked(likedIds.includes(productData._id));
+      setSaved(savedIds.includes(productData._id));
     } catch (err) {
       console.error(err);
     } finally {
@@ -51,30 +80,115 @@ const [showLoginPopup,setShowLoginPopup] = useState(false);
     loadData();
   }, [username, productSlug]);
 
-  /* ---------------- ADD TO CART ---------------- */
-
-async function addToCart() {
-
-  if (!session) {
-    setShowLoginPopup(true);
-    return;
+  useEffect(() => {
+  if (product?._id) {
+    recordView(product._id);
   }
+}, [product]);
 
-  await fetch("/api/cart/add", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      productId: product._id,
-    }),
-  });
 
-  setInCart(true);
-  setShowCartPopup(true);
+  async function recordView(productId: string) {
+  try {
+    const res = await fetch("/api/views", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ productId }),
+    });
+
+    const data = await res.json();
+
+    if (data.views !== undefined) {
+      setViews(data.views);
+    }
+
+  } catch (err) {
+    console.error(err);
+  }
 }
 
-  /* ---------------- REMOVE CART ---------------- */
+  //////////////////////////////////////////////////////
+  // LIKE
+  //////////////////////////////////////////////////////
+
+  async function toggleLike() {
+    if (!session) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    const res = await fetch("/api/likes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ productId: product._id }),
+    });
+
+    const data = await res.json();
+
+    if (data.liked) {
+      setLiked(true);
+      setLikesCount((prev: number) => prev + 1);
+    } else {
+      setLiked(false);
+      setLikesCount((prev: number) => prev - 1);
+    }
+  }
+
+  //////////////////////////////////////////////////////
+  // SAVE
+  //////////////////////////////////////////////////////
+
+  async function toggleSave() {
+    if (!session) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    const res = await fetch("/api/favorites", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ productId: product._id }),
+    });
+
+    const data = await res.json();
+
+    if (data.favorited) {
+      setSaved(true);
+      setSavesCount((prev: number) => prev + 1);
+    } else {
+      setSaved(false);
+      setSavesCount((prev: number) => prev - 1);
+    }
+  }
+
+  //////////////////////////////////////////////////////
+  // CART
+  //////////////////////////////////////////////////////
+
+  async function addToCart() {
+    if (!session) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    await fetch("/api/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        productId: product._id,
+      }),
+    });
+
+    setInCart(true);
+    setShowCartPopup(true);
+  }
 
   async function removeFromCart() {
     await fetch("/api/cart/remove", {
@@ -82,13 +196,17 @@ async function addToCart() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ productId: product._id }),
+      body: JSON.stringify({
+        productId: product._id,
+      }),
     });
 
     setInCart(false);
   }
 
-  /* ---------------- LOADING ---------------- */
+  //////////////////////////////////////////////////////
+  // LOADING
+  //////////////////////////////////////////////////////
 
   if (loading) {
     return (
@@ -98,6 +216,10 @@ async function addToCart() {
     );
   }
 
+  //////////////////////////////////////////////////////
+  // PRODUCT NOT FOUND
+  //////////////////////////////////////////////////////
+
   if (!product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-500">
@@ -106,17 +228,23 @@ async function addToCart() {
     );
   }
 
+  //////////////////////////////////////////////////////
+  // UI
+  //////////////////////////////////////////////////////
+
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
+
       <div className="max-w-6xl mx-auto px-6 md:px-10 py-16">
 
         {/* CREATOR */}
 
         <Link
           href={`/users/${product.createdBy?._id}`}
-          className="inline-flex items-center gap-4 mb-10 group"
+          className="inline-flex items-center gap-4 mb-10"
         >
           <div className="w-12 h-12 rounded-full bg-neutral-800 border border-neutral-700 overflow-hidden flex items-center justify-center text-lg font-semibold">
+
             {product.createdBy?.image ? (
               <img
                 src={product.createdBy.image}
@@ -126,16 +254,16 @@ async function addToCart() {
             ) : (
               product.createdBy?.username?.[0]?.toUpperCase()
             )}
+
           </div>
 
           <div>
-            <p className="font-medium group-hover:underline">
-              @{product.createdBy?.username}
-            </p>
+            <p className="font-medium">@{product.createdBy?.username}</p>
             <p className="text-xs text-neutral-500">
               View Profile
             </p>
           </div>
+
         </Link>
 
         {/* PRODUCT */}
@@ -145,6 +273,7 @@ async function addToCart() {
           {/* IMAGE */}
 
           <div className="bg-neutral-900 border border-neutral-800 rounded-3xl overflow-hidden">
+
             {product.thumbnail ? (
               <img
                 src={product.thumbnail}
@@ -153,39 +282,77 @@ async function addToCart() {
               />
             ) : (
               <div className="h-[400px] flex items-center justify-center text-neutral-500 bg-neutral-800">
-                No Preview Available
+                No Preview
               </div>
             )}
+
           </div>
 
           {/* DETAILS */}
 
-          <div className="flex flex-col">
+          <div>
 
-            <h1 className="text-4xl font-bold tracking-tight mb-6">
+            <h1 className="text-4xl font-bold mb-6">
               {product.title}
             </h1>
 
             {/* PRICE */}
 
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 mb-8">
-              <p className="text-sm text-neutral-500 mb-2">Price</p>
-              <p className="text-3xl font-semibold">₹ {product.price}</p>
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 mb-6">
+              <p className="text-sm text-neutral-500 mb-2">
+                Price
+              </p>
+              <p className="text-3xl font-semibold">
+                ₹ {product.price}
+              </p>
             </div>
 
-            {/* CART BUTTON */}
+            {/* INTERACTIONS */}
+
+          <div className="flex gap-4 mb-8">
+
+<button
+onClick={toggleLike}
+className={`flex-1 py-3 rounded-xl border transition
+${
+liked
+? "bg-red-500 border-red-400"
+: "bg-neutral-900 border-neutral-700 hover:bg-neutral-800"
+}`}
+>
+❤️ {likesCount} Likes
+</button>
+
+<button
+onClick={toggleSave}
+className={`flex-1 py-3 rounded-xl border transition
+${
+saved
+? "bg-yellow-500 text-black border-yellow-400"
+: "bg-neutral-900 border-neutral-700 hover:bg-neutral-800"
+}`}
+>
+⭐ {savesCount} Saves
+</button>
+
+<div className="flex-1 py-3 rounded-xl border bg-neutral-900 border-neutral-700 text-center">
+👁 {views} Views
+</div>
+
+</div>
+            {/* CART */}
 
             {!inCart ? (
               <button
                 onClick={addToCart}
-                className="w-full bg-yellow-500 text-black font-medium py-3 rounded-xl hover:bg-yellow-400 transition"
+                className="w-full bg-yellow-500 text-black py-3 rounded-xl hover:bg-yellow-400 transition"
               >
                 Add to Cart
               </button>
             ) : (
               <button
                 onClick={removeFromCart}
-                className="w-full bg-red-500 text-white font-medium py-3 rounded-xl hover:bg-red-400 transition"
+                className="w-full bg-red-500 text-white py-3 rounded-xl hover:bg-red-400 transition"
               >
                 Remove From Cart
               </button>
@@ -194,12 +361,15 @@ async function addToCart() {
             {/* DESCRIPTION */}
 
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 mt-8">
+
               <h2 className="text-lg font-semibold mb-4">
                 Description
               </h2>
+
               <p className="text-neutral-300 leading-relaxed">
                 {product.description}
               </p>
+
             </div>
 
           </div>
@@ -208,101 +378,63 @@ async function addToCart() {
 
       {/* CART POPUP */}
 
-     {showCartPopup && (
-  <div className="fixed inset-0 flex items-center justify-center z-50">
+      {showCartPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
 
-    {/* Overlay */}
-    <div
-      className="absolute inset-0 bg-black/50"
-      onClick={() => setShowCartPopup(false)}
-    />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCartPopup(false)}
+          />
 
-    {/* Modal */}
-    <div className="relative bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-80 shadow-xl">
+          <div className="relative bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-80">
 
-      <p className="mb-4 font-medium text-green-400 text-center">
-        🛒 Added to cart!
-      </p>
+            <p className="text-green-400 text-center mb-4">
+              🛒 Added to cart!
+            </p>
 
-      {/* Product Info */}
-      <div className="bg-neutral-800 rounded-lg p-4 mb-4">
+            <button
+              onClick={() => router.push("/mycart")}
+              className="w-full bg-yellow-500 text-black py-2 rounded-lg"
+            >
+              View Cart
+            </button>
 
-        <p className="font-semibold text-white line-clamp-1">
-          {product.title}
-        </p>
+          </div>
 
-        <p className="text-sm text-neutral-400 mt-1">
-          ₹ {product.price}
-        </p>
+        </div>
+      )}
 
-      </div>
+      {/* LOGIN POPUP */}
 
-      {/* Buttons */}
-      <div className="flex gap-3">
+      {showLoginPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
 
-        <button
-          onClick={() => router.push("/mycart")}
-          className="flex-1 bg-yellow-500 text-black py-2 rounded-lg hover:bg-yellow-400 transition"
-        >
-          View Cart
-        </button>
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowLoginPopup(false)}
+          />
 
-        <button
-          onClick={() => setShowCartPopup(false)}
-          className="flex-1 bg-neutral-800 text-white py-2 rounded-lg hover:bg-neutral-700 transition"
-        >
-          Letter
-        </button>
+          <div className="relative bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-80">
 
-      </div>
+            <h3 className="text-lg font-semibold text-center mb-3">
+              Login Required
+            </h3>
 
-    </div>
-  </div>
-)}
+            <p className="text-neutral-400 text-sm text-center mb-6">
+              Please login to interact with products.
+            </p>
 
+            <Link
+              href="/login?mode=login"
+              className="block text-center bg-yellow-500 text-black py-2 rounded-lg"
+            >
+              Login Now
+            </Link>
 
-{showLoginPopup && (
+          </div>
 
-<div className="fixed inset-0 flex items-center justify-center z-50">
-
-<div
-className="absolute inset-0 bg-black/50"
-onClick={()=>setShowLoginPopup(false)}
-/>
-
-<div className="relative bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-80">
-
-<h3 className="text-lg font-semibold mb-3 text-center">
-Login Required
-</h3>
-
-<p className="text-neutral-400 text-sm text-center mb-6">
-You must login to add items to cart.
-</p>
-
-<div className="flex gap-3">
-
-<Link
-href="/login?mode=login"
-className="flex-1 text-center bg-yellow-500 text-black py-2 rounded-lg hover:bg-yellow-400 transition"
->
-Login Now
-</Link>
-
-<button
-onClick={()=>setShowLoginPopup(false)}
-className="flex-1 bg-neutral-800 text-white py-2 rounded-lg hover:bg-neutral-700"
->
-Cancel
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-)}
+        </div>
+      )}
 
     </div>
   );

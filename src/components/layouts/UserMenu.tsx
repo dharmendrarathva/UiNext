@@ -61,11 +61,17 @@ export default function UserMenu({ user }: UserMenuProps) {
               <Link href="/profile" className="block px-4 py-2 text-sm hover:bg-white/10">
                 Profile
               </Link>
+                <Link href="/favorites" className="block px-4 py-2 text-sm hover:bg-white/10">
+                Favorites
+              </Link>
                <Link href="/myproducts" className="block px-4 py-2 text-sm hover:bg-white/10">
                 My Products
               </Link>
               <Link href="/dashboard" className="block px-4 py-2 text-sm hover:bg-white/10">
                 Dashboard
+              </Link>
+               <Link href="/liked" className="block px-4 py-2 text-sm hover:bg-white/10">
+                Liked
               </Link>
             </>
           )}
