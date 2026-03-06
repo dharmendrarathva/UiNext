@@ -43,14 +43,15 @@ export async function GET(
     // PRODUCT
     ////////////////////////////////////////////////////
 
-    const product = await Product.findOne({
-      slug,
-      createdBy: user._id,
-      status: "APPROVED",
-      isDeleted: false,
-    })
-      .populate("createdBy", "username image name")
-      .lean();
+  const product = await Product.findOne({
+  slug,
+  createdBy: user._id,
+  status: "APPROVED",
+  isDeleted: false,
+})
+  .populate("createdBy", "username image name")
+  .populate("category", "name slug icon")
+  .lean();
 
     if (!product) {
       return NextResponse.json(

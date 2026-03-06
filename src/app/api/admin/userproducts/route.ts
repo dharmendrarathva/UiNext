@@ -35,8 +35,9 @@ export async function GET(req: Request) {
   }
 
   const products = await Product.find(query)
-    .populate("createdBy", "username email")
-    .sort({ createdAt: -1 });
+  .populate("createdBy", "username email")
+  .populate("category", "name slug icon")
+  .sort({ createdAt: -1 });
 
   return NextResponse.json(products);
 }

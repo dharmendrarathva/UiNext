@@ -1,26 +1,9 @@
-// export interface Product {
-//   _id: string
-//   title: string
-//   description?: string
-//   price: number
-//   slug: string
-//   thumbnail?: string
-
-//   likesCount?: number
-//   favoritesCount?: number
-//   viewsCount?: number
-
-//   liked?: boolean
-//   saved?: boolean
-
-//   createdBy?: {
-//     username: string
-//   }
-// }
 
 
 
 
+
+import { Category } from "./Category";
 
 
 
@@ -45,6 +28,7 @@ export interface ProductDB {
   thumbnail?: string
 
   createdBy: string
+  category: string
 
   status: ProductStatus
   rejectionReason?: string | null
@@ -75,6 +59,11 @@ export interface Product {
   price: number
   thumbnail?: string
 
+  category?: {
+    name: string
+    slug: string
+  }
+
   likesCount?: number
   favoritesCount?: number
   viewsCount?: number
@@ -91,7 +80,6 @@ export interface Product {
 //////////////////////////////////////////////////////
 // DASHBOARD PRODUCT (creator panel)
 //////////////////////////////////////////////////////
-
 export interface DashboardProduct {
 
   _id: string
@@ -100,12 +88,12 @@ export interface DashboardProduct {
   description: string
   price: number
 
+  category: string | Category
+
   status: ProductStatus
   rejectionReason?: string
 
 }
-
-
 
 
 

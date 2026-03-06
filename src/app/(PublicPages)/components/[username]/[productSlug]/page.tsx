@@ -199,7 +199,7 @@ export default function ProductPage({
             <h1 className="text-4xl font-bold mb-6">
               {product.title}
             </h1>
-
+ 
             {/* PRICE */}
 
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 mb-6">
@@ -250,11 +250,37 @@ export default function ProductPage({
                 Description
               </h2>
 
+
               <p className="text-neutral-300 leading-relaxed">
                 {product.description}
               </p>
 
             </div>
+
+               {product.category && (
+  <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 mt-8">
+
+    <h2 className="text-lg font-semibold mb-3">
+      # Tags
+    </h2>
+
+  <Link
+  href={`/${product.category.slug}`}
+  className="inline-flex items-center justify-center
+  px-6 py-3
+  text-base font-semibold
+  bg-neutral-900 text-yellow-400
+  border border-neutral-700
+  rounded-xl
+  hover:border-yellow-400 hover:text-yellow-300
+  transition"
+>
+  {product.category.name}
+</Link>
+
+  </div>
+)}
+
 
           </div>
 

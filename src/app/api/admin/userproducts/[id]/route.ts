@@ -37,5 +37,9 @@ export async function PATCH(
 
   await product.save();
 
-  return NextResponse.json(product);
+const populatedProduct = await Product.findById(id)
+  .populate("createdBy", "username email")
+  .populate("category", "name slug");
+
+return NextResponse.json(populatedProduct);
 }

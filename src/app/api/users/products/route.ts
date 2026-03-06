@@ -19,10 +19,11 @@ export async function GET() {
 
     await connectDB();
 
-    const products = await Product.find({
-      createdBy: session.user.id,
-      isDeleted: false,
-    }).sort({ createdAt: -1 });
+const products = await Product.find({
+  createdBy: session.user.id,
+  isDeleted: false,
+}).populate("category", "name slug")
+.sort({ createdAt: -1 });
 
     return NextResponse.json(products);
 

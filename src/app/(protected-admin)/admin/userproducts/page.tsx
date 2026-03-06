@@ -111,6 +111,10 @@ export default function AdminProducts() {
               {p.title}
             </h3>
 
+         <span className="inline-block bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded mb-2">
+  {p.category?.name || "Uncategorized"}
+</span>
+
             <p className="text-neutral-400 text-sm mb-4 line-clamp-3">
               {p.description}
             </p>

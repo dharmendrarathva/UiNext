@@ -9,6 +9,7 @@ interface ProductDoc {
   slug: string;
   description: string;
   price: number;
+    category: mongoose.Types.ObjectId;
   thumbnail?: string;
   createdBy: mongoose.Types.ObjectId;
   status: ProductStatus;
@@ -48,6 +49,12 @@ const ProductSchema = new Schema<ProductDoc>(
       required: true,
       min: 0,
     },
+category: {
+  type: Schema.Types.ObjectId,
+  ref: "Category",
+  required: true,
+  index: true,
+},
 
     thumbnail: String,
 

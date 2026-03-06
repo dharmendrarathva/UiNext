@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import PolicyToUpload from "@/components/Overlays/PolicyToUpload";
 import ProductCard from "@/components/ProductComponents/ProductCard";
 import { Product as ProductCardProduct } from "@/types/Product";
+import { Category } from "@/types/Category";
 
 
 interface Product {
@@ -12,27 +13,29 @@ interface Product {
   description: string;
   price: number;
   status: string;
+  category: string | Category;
   rejectionReason?: string;
-  parentProduct?: string;
-  variationIndex?: number;
 }
 
 export default function MyProducts() {
 
   const [products, setProducts] = useState<Product[]>([]);
 
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    price: 0,
-  });
+const [form, setForm] = useState({
+  title: "",
+  description: "",
+  price: 0,
+  category: "",
+});
 
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
+  
 const [policyAccepted, setPolicyAccepted] = useState<boolean | null>(null);
 const [publishedProducts, setPublishedProducts] = useState<ProductCardProduct[]>([]);
 
+const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 const [filter, setFilter] = useState<
   "ALL" | "APPROVED" | "PENDING" | "DRAFT" | "REJECTED" | "MY_PUBLISHED"
@@ -66,7 +69,11 @@ async function checkPolicy() {
 
   }
 }
-
+async function loadCategories() {
+  const res = await fetch("/api/admin/cat-management");
+  const data = await res.json();
+  setCategories(data);
+}
 
   async function loadProducts() {
     const res = await fetch("/api/users/products");
@@ -102,22 +109,23 @@ useEffect(() => {
 useEffect(() => {
   loadProducts();
   checkPolicy();
+  loadCategories();
 }, []);
 
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) {
-
-    setForm({
-      ...form,
-      [e.target.name]:
-        e.target.name === "price"
-          ? Number(e.target.value)
-          : e.target.value,
-    });
-
-  }
+ function handleChange(
+  e: React.ChangeEvent<
+    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  >
+) {
+  setForm({
+    ...form,
+    [e.target.name]:
+      e.target.name === "price"
+        ? Number(e.target.value)
+        : e.target.value,
+  });
+}
 
 
   async function createProduct(status: "DRAFT" | "PENDING") {
@@ -136,27 +144,32 @@ useEffect(() => {
     setCreateModal(false);
 
     setForm({
-      title: "",
-      description: "",
-      price: 0,
-    });
+  title: "",
+  description: "",
+  price: 0,
+  category: "",
+});
 
     loadProducts();
   }
 
 
-  function startEdit(product: Product) {
+function startEdit(product: Product) {
 
-    setEditingProduct(product);
+  setEditingProduct(product);
 
-    setForm({
-      title: product.title,
-      description: product.description,
-      price: product.price,
-    });
+  setForm({
+    title: product.title,
+    description: product.description,
+    price: product.price,
+    category:
+      typeof product.category === "string"
+        ? product.category
+        : product.category._id,
+  });
 
-    setEditModal(true);
-  }
+  setEditModal(true);
+}
 
 
   async function updateProduct() {
@@ -172,12 +185,12 @@ useEffect(() => {
     setEditModal(false);
     setEditingProduct(null);
 
-    setForm({
-      title: "",
-      description: "",
-      price: 0,
-    });
-
+   setForm({
+  title: "",
+  description: "",
+  price: 0,
+  category: "",
+});
     loadProducts();
   }
 
@@ -294,6 +307,10 @@ useEffect(() => {
         ₹{p.price}
       </p>
 
+<p className="text-sm text-yellow-400 mt-1">
+  {p.category && typeof p.category !== "string" ? p.category.name : ""}
+</p>
+
       <span className={`text-xs px-3 py-1 rounded-full ${statusBadge(p.status)}`}>
         {p.status}
       </span>
@@ -386,7 +403,22 @@ useEffect(() => {
                 placeholder="Price"
                 className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
               />
+<select
+  name="category"
+  value={form.category}
+  onChange={(e) =>
+    setForm({ ...form, category: e.target.value })
+  }
+  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
+>
+  <option value="">Select Category</option>
 
+  {categories.map((cat) => (
+    <option key={cat._id} value={cat._id}>
+      {cat.name}
+    </option>
+  ))}
+</select>
               <div className="flex gap-3 pt-4">
 
                 <button
@@ -458,6 +490,24 @@ useEffect(() => {
                 placeholder="Price"
                 className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
               />
+
+             <select
+  required
+  name="category"
+  value={form.category}
+  onChange={(e) =>
+    setForm({ ...form, category: e.target.value })
+  }
+  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
+>
+  <option value="">Select Category</option>
+
+  {categories.map((cat) => (
+    <option key={cat._id} value={cat._id}>
+      {cat.name}
+    </option>
+  ))}
+</select>
 
               <div className="flex gap-3 pt-4">
 

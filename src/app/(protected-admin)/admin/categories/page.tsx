@@ -7,94 +7,116 @@ interface Category {
   name: string;
   slug: string;
   description?: string;
+  icon?: string;
 }
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [form, setForm] = useState({ name: "", description: "" });
+  const [loading, setLoading] = useState(true);
+
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    icon: "",
+  });
+
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const API_BASE = "/api/admin/categories";
-
-  const fetchCategories = async () => {
-    const res = await fetch(API_BASE);
+  // FETCH CATEGORIES
+  async function fetchCategories() {
+    const res = await fetch("/api/admin/cat-management");
     const data = await res.json();
     setCategories(data);
-  };
+    setLoading(false);
+  }
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  /* ================= CREATE ================= */
+  // CREATE OR UPDATE CATEGORY
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
 
-  const handleCreate = async () => {
-    if (!form.name) return;
+    const method = editingId ? "PUT" : "POST";
 
-    await fetch(API_BASE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const url = editingId
+      ? `/api/admin/cat-management/${editingId}`
+      : "/api/admin/cat-management";
+
+    await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(form),
     });
 
-    setForm({ name: "", description: "" });
-    fetchCategories();
-  };
-
-  /* ================= UPDATE ================= */
-
-  const handleUpdate = async () => {
-    if (!editingId) return;
-
-    await fetch(`${API_BASE}/${editingId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+    setForm({
+      name: "",
+      description: "",
+      icon: "",
     });
 
-    setIsModalOpen(false);
     setEditingId(null);
-    setForm({ name: "", description: "" });
+
     fetchCategories();
-  };
+  }
 
-  /* ================= DELETE ================= */
+  // EDIT
+  function handleEdit(cat: Category) {
+    setForm({
+      name: cat.name,
+      description: cat.description || "",
+      icon: cat.icon || "",
+    });
 
-  const handleDelete = async (id: string) => {
-    await fetch(`${API_BASE}/${id}`, {
+    setEditingId(cat._id);
+  }
+
+  // DELETE
+  async function handleDelete(id: string) {
+    if (!confirm("Delete this category?")) return;
+
+    await fetch(`/api/admin/cat-management/${id}`, {
       method: "DELETE",
     });
+
     fetchCategories();
-  };
-
-  /* ================= OPEN EDIT MODAL ================= */
-
-  const openEditModal = (category: Category) => {
-    setEditingId(category._id);
-    setForm({
-      name: category.name,
-      description: category.description || "",
-    });
-    setIsModalOpen(true);
-  };
+  }
 
   return (
-    <div className="p-10 text-white max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Manage Categories</h1>
+    <div className="max-w-5xl mx-auto py-10 space-y-10">
+      <h1 className="text-3xl font-bold">Category Management</h1>
 
-      {/* ================= CREATE FORM ================= */}
-      <div className="bg-neutral-900 p-6 rounded-xl mb-10">
-        <h2 className="text-xl font-semibold mb-4">Create Category</h2>
+      {/* CREATE / UPDATE FORM */}
+      <form
+        onSubmit={handleSubmit}
+        className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-4"
+      >
+        <h2 className="text-xl font-semibold">
+          {editingId ? "Update Category" : "Create Category"}
+        </h2>
 
         <input
           type="text"
-          placeholder="Category Name"
+          placeholder="Category name"
           value={form.name}
           onChange={(e) =>
             setForm({ ...form, name: e.target.value })
           }
-          className="w-full p-3 mb-4 rounded bg-neutral-800 border border-neutral-700"
+          required
+          className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2"
+        />
+
+        <input
+          type="text"
+          placeholder="Icon URL"
+          value={form.icon}
+          onChange={(e) =>
+            setForm({ ...form, icon: e.target.value })
+          }
+          className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2"
         />
 
         <textarea
@@ -103,96 +125,61 @@ export default function AdminCategoriesPage() {
           onChange={(e) =>
             setForm({ ...form, description: e.target.value })
           }
-          className="w-full p-3 mb-4 rounded bg-neutral-800 border border-neutral-700"
+          className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2"
         />
 
         <button
-          onClick={handleCreate}
-          className="px-6 py-2 bg-amber-500 text-black rounded-lg hover:bg-amber-400 transition"
+          type="submit"
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
         >
-          Create
+          {editingId ? "Update Category" : "Create Category"}
         </button>
-      </div>
+      </form>
 
-      {/* ================= CATEGORY LIST ================= */}
-      <div className="space-y-4">
-        {categories.map((cat) => (
-          <div
-            key={cat._id}
-            className="flex items-center justify-between bg-neutral-900 p-4 rounded-xl"
-          >
-            <div>
-              <p className="font-semibold">{cat.name}</p>
-              <p className="text-sm text-neutral-400">
-                /category/{cat.slug}
-              </p>
-            </div>
+      {/* CATEGORY LIST */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+        <h2 className="text-xl font-semibold mb-6">
+          All Categories
+        </h2>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => openEditModal(cat)}
-                className="px-4 py-1 text-sm bg-blue-600 rounded hover:bg-blue-500"
+        {loading ? (
+          <p>Loading...</p>
+        ) : categories.length === 0 ? (
+          <p>No categories found.</p>
+        ) : (
+          <div className="space-y-4">
+            {categories.map((cat) => (
+              <div
+                key={cat._id}
+                className="flex justify-between items-center border border-neutral-800 rounded-lg p-4"
               >
-                Edit
-              </button>
+                <div>
+                  <p className="font-semibold">{cat.name}</p>
+                  <p className="text-sm text-neutral-400">
+                    /{cat.slug}
+                  </p>
+                </div>
 
-              <button
-                onClick={() => handleDelete(cat._id)}
-                className="px-4 py-1 text-sm bg-red-600 rounded hover:bg-red-500"
-              >
-                Delete
-              </button>
-            </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => handleEdit(cat)}
+                    className="text-yellow-400"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(cat._id)}
+                    className="text-red-500"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
-
-      {/* ================= EDIT MODAL ================= */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-neutral-900 w-full max-w-md p-6 rounded-2xl shadow-2xl border border-neutral-700">
-            <h2 className="text-xl font-semibold mb-6">
-              Update Category
-            </h2>
-
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) =>
-                setForm({ ...form, name: e.target.value })
-              }
-              className="w-full p-3 mb-4 rounded bg-neutral-800 border border-neutral-700"
-            />
-
-            <textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-              className="w-full p-3 mb-6 rounded bg-neutral-800 border border-neutral-700"
-            />
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditingId(null);
-                }}
-                className="px-4 py-2 bg-neutral-700 rounded hover:bg-neutral-600"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleUpdate}
-                className="px-4 py-2 bg-amber-500 text-black rounded hover:bg-amber-400"
-              >
-                Update
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
