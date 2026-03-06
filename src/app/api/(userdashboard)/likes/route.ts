@@ -4,42 +4,72 @@ import { ProductLike } from "@/models/ProductLike";
 import { Product } from "@/models/Product";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { ProductFavorite } from "@/models/ProductFavorite";
 
 //////////////////////////////////////////////////////
 // GET LIKED PRODUCTS
 //////////////////////////////////////////////////////
 
+
+
 export async function GET() {
-  try {
-    await connectDB();
 
-    const session = await getServerSession(authOptions);
+  await connectDB()
 
-    if (!session?.user?.id) {
-      return NextResponse.json([]);
+  const session = await getServerSession(authOptions)
+  const userId = session?.user?.id
+
+  if(!userId) return NextResponse.json([])
+
+  ////////////////////////////////////////////////////
+  // LIKES
+  ////////////////////////////////////////////////////
+
+  const likes = await ProductLike.find({
+    user:userId
+  })
+  .populate({
+    path:"product",
+    select:"title slug price thumbnail createdBy likesCount favoritesCount viewsCount",
+    populate:{
+      path:"createdBy",
+      select:"username"
+    }
+  })
+  .sort({createdAt:-1})
+  .lean()
+
+  ////////////////////////////////////////////////////
+  // FAVORITES
+  ////////////////////////////////////////////////////
+
+  const favorites = await ProductFavorite.find({
+    user:userId
+  }).select("product")
+
+  const savedIds = new Set(
+    favorites.map((f:any)=>f.product.toString())
+  )
+
+  ////////////////////////////////////////////////////
+  // ATTACH FLAGS
+  ////////////////////////////////////////////////////
+
+  const result = likes.map((l:any)=>({
+
+    ...l,
+
+    product:{
+      ...l.product,
+      liked:true,
+      saved:savedIds.has(l.product._id.toString())
     }
 
-    const likes = await ProductLike.find({
-      user: session.user.id,
-    })
-      .populate({
-        path: "product",
-        select: "_id title slug price thumbnail createdBy",
-        populate: {
-          path: "createdBy",
-          select: "username",
-        },
-      })
-      .sort({ createdAt: -1 })
-      .lean();
+  }))
 
-    return NextResponse.json(likes);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Failed to load likes" }, { status: 500 });
-  }
+  return NextResponse.json(result)
+
 }
-
 //////////////////////////////////////////////////////
 // TOGGLE LIKE
 //////////////////////////////////////////////////////

@@ -26,5 +26,6 @@ export async function GET() {
 })
     .lean();
 
-  return NextResponse.json(cart || { items: [] });
-}
+return NextResponse.json({
+  items: cart?.items ?? []
+});}

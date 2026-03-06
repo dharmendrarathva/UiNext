@@ -4,47 +4,44 @@ import { useEffect, useState } from "react";
 import ProductCard from "@/components/ProductComponents/ProductCard";
 import { Product } from "@/types/Product";
 
-interface LikeItem {
-  _id: string
-  product: Product
-}
+export default function PublishedProductsPage() {
 
-export default function LikedPage() {
-
-  const [likes,setLikes] = useState<LikeItem[]>([])
-  const [loading,setLoading] = useState(true)
+  const [products,setProducts] = useState<Product[]>([]);
+  const [loading,setLoading] = useState(true);
 
   ////////////////////////////////////////////////////
-  // LOAD LIKES
+  // LOAD PRODUCTS
   ////////////////////////////////////////////////////
 
-  async function loadLikes(){
+  async function loadProducts(){
 
     try{
 
-      const res = await fetch("/api/likes")
+      const res = await fetch("/api/products");
 
-      if(!res.ok) return
+      if(!res.ok) return;
 
-      const data = await res.json()
+      const data = await res.json();
 
-      setLikes(data)
+      setProducts(data);
 
-    }catch(err){
+    }catch(error){
 
-      console.error(err)
+      console.error("Failed to load products:",error);
 
     }finally{
 
-      setLoading(false)
+      setLoading(false);
 
     }
 
   }
 
   useEffect(()=>{
-    loadLikes()
-  },[])
+
+    loadProducts();
+
+  },[]);
 
   ////////////////////////////////////////////////////
   // LOADING
@@ -53,10 +50,12 @@ export default function LikedPage() {
   if(loading){
 
     return(
+
       <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-400">
-        Loading liked products...
+        Loading products...
       </div>
-    )
+
+    );
 
   }
 
@@ -64,23 +63,23 @@ export default function LikedPage() {
   // EMPTY STATE
   ////////////////////////////////////////////////////
 
-  if(likes.length === 0){
+  if(products.length === 0){
 
     return(
 
       <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-950 text-white">
 
         <h2 className="text-2xl font-semibold">
-          No liked products
+          No published products
         </h2>
 
         <p className="text-neutral-400 mt-2">
-          Like products to see them here.
+          There are currently no approved marketplace products.
         </p>
 
       </div>
 
-    )
+    );
 
   }
 
@@ -92,25 +91,28 @@ export default function LikedPage() {
 
     <div className="min-h-screen bg-neutral-950 px-6 md:px-16 py-12 text-white">
 
-      <h1 className="text-3xl font-bold mb-10">
-        Liked Products
-      </h1>
+      <div className="mb-12">
 
-        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <h1 className="text-3xl md:text-4xl font-bold">
+          Published Marketplace Products
+        </h1>
 
-        {likes.map(l => (
-
-          <ProductCard
-            key={l.product._id}
-            product={l.product}
-          />
-
-        ))}
+        <p className="text-neutral-400 mt-2">
+          All approved products visible to users.
+        </p>
 
       </div>
 
+        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+        {products.map((p)=>(
+          <ProductCard key={p._id} product={p}/>
+        ))}
+
+      </div>    
+
     </div>
 
-  )
+  );
 
 }

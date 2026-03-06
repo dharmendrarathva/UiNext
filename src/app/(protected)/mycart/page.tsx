@@ -5,17 +5,10 @@ import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Product } from "@/types/Product";
 
 
-interface Product {
-  _id: string;
-  title: string;
-  slug: string;
-  thumbnail?: string;
-  createdBy?: {
-    username: string;
-  };
-}
+
 
 interface CartItem {
   _id: string;
@@ -26,7 +19,6 @@ interface CartItem {
 interface Cart {
   items: CartItem[];
 }
-
 
 
 
@@ -58,20 +50,18 @@ export default function MyCart() {
 
     }
   }
+useEffect(() => {
 
+  if (status === "loading") return;
 
- useEffect(() => {
+  if (!session) {
+    router.replace("/login?mode=login");
+    return;
+  }
 
-    if (status === "loading") return;
+  loadCart();
 
-    if (!session) {
-      router.push("/login?mode=login");
-      return;
-    }
-
-    loadCart();
-
-  }, [session, status]);
+}, [status]);
 
   async function removeFromCart(productId: string) {
   try {
@@ -83,16 +73,11 @@ export default function MyCart() {
       body: JSON.stringify({ productId }),
     });
 
-    setCart((prev) => {
-      if (!prev) return prev;
-
-      return {
-        ...prev,
-        items: prev.items.filter(
-          (item) => item.product._id !== productId
-        ),
-      };
-    });
+  setCart(prev =>
+  prev
+    ? { ...prev, items: prev.items.filter(i => i.product._id !== productId) }
+    : prev
+);
   } catch (err) {
     console.error("Remove error:", err);
   }
@@ -150,14 +135,14 @@ export default function MyCart() {
             >
               {/* Product Image */}
               {product.thumbnail ? (
-                <Image
-                  src={product.thumbnail}
-                  alt={product.title}
-                  width={120}
-                  height={80}
-                  className="w-28 h-20 object-cover rounded-xl border border-neutral-800"
-                  unoptimized
-                />
+               <Image
+  src={product.thumbnail}
+  alt={product.title}
+  width={120}
+  height={80}
+  className="w-28 h-20 object-cover rounded-xl border border-neutral-800"
+  priority
+/>
               ) : (
                 <div className="w-28 h-20 rounded-xl border border-neutral-800 bg-neutral-800 flex items-center justify-center text-xs text-neutral-500">
                   No Image

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import PolicyToUpload from "@/components/Overlays/PolicyToUpload";
+import ProductCard from "@/components/ProductComponents/ProductCard";
+import { Product as ProductCardProduct } from "@/types/Product";
 
 
 interface Product {
@@ -29,12 +31,12 @@ export default function MyProducts() {
   const [editModal, setEditModal] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
 const [policyAccepted, setPolicyAccepted] = useState<boolean | null>(null);
+const [publishedProducts, setPublishedProducts] = useState<ProductCardProduct[]>([]);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [filter, setFilter] = useState<
-  "ALL" | "APPROVED" | "PENDING" | "DRAFT" | "REJECTED"
+const [filter, setFilter] = useState<
+  "ALL" | "APPROVED" | "PENDING" | "DRAFT" | "REJECTED" | "MY_PUBLISHED"
 >("ALL");
-
 
 
 const filteredProducts =
@@ -71,6 +73,31 @@ async function checkPolicy() {
     const data = await res.json();
     setProducts(data);
   }
+
+
+  async function loadPublishedProducts() {
+
+  const res = await fetch("/api/products");
+
+  if (!res.ok) return;
+
+  const data = await res.json();
+
+  const myProducts = data.filter(
+    (p: any) => products.some((u) => u._id === p._id)
+  );
+
+  setPublishedProducts(myProducts);
+
+}
+
+useEffect(() => {
+
+  if (filter === "MY_PUBLISHED" && publishedProducts.length === 0) {
+    loadPublishedProducts();
+  }
+
+}, [filter]);
 
 useEffect(() => {
   loadProducts();
@@ -218,8 +245,7 @@ useEffect(() => {
 
       <div className="flex flex-wrap gap-3 mb-8">
 
-  {["ALL","APPROVED","PENDING","DRAFT","REJECTED"].map((status) => (
-
+{["ALL","APPROVED","PENDING","DRAFT","REJECTED","MY_PUBLISHED"].map((status) => (
     <button
       key={status}
       onClick={() => setFilter(status as any)}
@@ -230,8 +256,8 @@ useEffect(() => {
             : "bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
         }`}
     >
-      {status}
-    </button>
+{status === "MY_PUBLISHED" ? "My Published" : status}  
+  </button>
 
   ))}
 
@@ -239,77 +265,88 @@ useEffect(() => {
 
       {/* PRODUCT GRID */}
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+   <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-{filteredProducts.map((p) => (
-          <div
-            key={p._id}
-            className="bg-neutral-900 border border-neutral-800 rounded-xl p-6"
-          >
+{filter === "MY_PUBLISHED" ? (
 
-            <h3 className="text-xl font-semibold mb-2">
-              {p.title}
-            </h3>
+  publishedProducts.map((p) => (
+    <ProductCard key={p._id} product={p} />
+  ))
 
-            <p className="text-neutral-400 text-sm mb-3">
-              {p.description}
-            </p>
+) : (
 
-            <p className="text-lg mb-3">
-              ₹{p.price}
-            </p>
+  filteredProducts.map((p) => (
 
-            <span className={`text-xs px-3 py-1 rounded-full ${statusBadge(p.status)}`}>
-              {p.status}
-            </span>
+    <div
+      key={p._id}
+      className="bg-neutral-900 border border-neutral-800 rounded-xl p-6"
+    >
 
-            {p.status === "REJECTED" && (
-              <div className="mt-3 text-sm text-red-400">
-                Reason: {p.rejectionReason}
-              </div>
-            )}
+      <h3 className="text-xl font-semibold mb-2">
+        {p.title}
+      </h3>
 
-            {p.status === "DRAFT" && (
-              <button
-                onClick={() =>
-                  fetch(`/api/users/products/${p._id}/submit`, {
-                    method: "PATCH",
-                  }).then(loadProducts)
-                }
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm mt-3 ml-26"
-              >
-                Submit for Review
-              </button>
-            )}
+      <p className="text-neutral-400 text-sm mb-3">
+        {p.description}
+      </p>
 
-            <div className="flex flex-wrap gap-3 mt-5">
+      <p className="text-lg mb-3">
+        ₹{p.price}
+      </p>
 
-              <button
-                disabled={p.status === "APPROVED"}
-                onClick={() => startEdit(p)}
-                className={`flex-1 px-3 py-2 rounded-lg text-sm ${
-                  p.status === "APPROVED"
-                    ? "bg-neutral-800 text-neutral-500 cursor-not-allowed"
-                    : "bg-neutral-700 hover:bg-neutral-600"
-                }`}
-              >
-                Edit
-              </button>
+      <span className={`text-xs px-3 py-1 rounded-full ${statusBadge(p.status)}`}>
+        {p.status}
+      </span>
 
-              <button
-                onClick={() => deleteProduct(p._id)}
-                className="flex-1 bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm"
-              >
-                Delete
-              </button>
+      {p.status === "REJECTED" && (
+        <div className="mt-3 text-sm text-red-400">
+          Reason: {p.rejectionReason}
+        </div>
+      )}
 
-            </div>
+      {p.status === "DRAFT" && (
+        <button
+          onClick={() =>
+            fetch(`/api/users/products/${p._id}/submit`, {
+              method: "PATCH",
+            }).then(loadProducts)
+          }
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm mt-3"
+        >
+          Submit for Review
+        </button>
+      )}
 
-          </div>
+      <div className="flex flex-wrap gap-3 mt-5">
 
-        ))}
+        <button
+          disabled={p.status === "APPROVED"}
+          onClick={() => startEdit(p)}
+          className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+            p.status === "APPROVED"
+              ? "bg-neutral-800 text-neutral-500 cursor-not-allowed"
+              : "bg-neutral-700 hover:bg-neutral-600"
+          }`}
+        >
+          Edit
+        </button>
+
+        <button
+          onClick={() => deleteProduct(p._id)}
+          className="flex-1 bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm"
+        >
+          Delete
+        </button>
 
       </div>
+
+    </div>
+
+  ))
+
+)}
+
+</div>
 
       {/* CREATE MODAL */}
 
