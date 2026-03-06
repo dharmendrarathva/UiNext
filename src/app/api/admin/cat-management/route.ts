@@ -2,26 +2,106 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { Category } from "@/models/Category";
 
+//////////////////////////////////////////////////////
+// GET ALL CATEGORIES
+//////////////////////////////////////////////////////
+
 export async function GET() {
 
-  await connectDB();
+  try {
 
-  const categories = await Category.find().sort({ createdAt: -1 });
+    await connectDB();
 
-  return NextResponse.json(categories);
+    const categories = await Category
+      .find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json(categories);
+
+  } catch (error) {
+
+    console.error("CATEGORY GET ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Failed to fetch categories" },
+      { status: 500 }
+    );
+
+  }
+
 }
+
+//////////////////////////////////////////////////////
+// CREATE CATEGORY
+//////////////////////////////////////////////////////
 
 export async function POST(req: Request) {
 
-  await connectDB();
+  try {
 
-  const body = await req.json();
+    await connectDB();
 
-  const category = await Category.create({
-    name: body.name,
-    description: body.description,
-    icon: body.icon,
-  });
+    const body = await req.json();
 
-  return NextResponse.json(category);
+    const { name, description, icon } = body;
+
+    if (!name) {
+
+      return NextResponse.json(
+        { error: "Category name required" },
+        { status: 400 }
+      );
+
+    }
+
+    //////////////////////////////////////////////////
+    // CREATE SLUG
+    //////////////////////////////////////////////////
+
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "");
+
+    //////////////////////////////////////////////////
+    // DUPLICATE CHECK
+    //////////////////////////////////////////////////
+
+    const exists = await Category.findOne({ slug });
+
+    if (exists) {
+
+      return NextResponse.json(
+        { error: "Category already exists" },
+        { status: 409 }
+      );
+
+    }
+
+    //////////////////////////////////////////////////
+    // CREATE CATEGORY
+    //////////////////////////////////////////////////
+
+    const category = await Category.create({
+      name,
+      slug,
+      description,
+      icon,
+    });
+
+    return NextResponse.json(category);
+
+  } catch (error) {
+
+    console.error("CATEGORY CREATE ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Failed to create category" },
+      { status: 500 }
+    );
+
+  }
+
 }

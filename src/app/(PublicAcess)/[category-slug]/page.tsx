@@ -1,87 +1,12 @@
-
-
-// import { notFound } from "next/navigation";
-// import ProductCard from "@/components/ProductComponents/ProductCard";
-
-// async function getProducts(slug: string) {
-//   const res = await fetch(
-//     `${process.env.NEXTAUTH_URL}/api/category/${slug}`,
-//     { cache: "no-store" }
-//   );
-
-//   if (!res.ok) return null;
-
-//   return res.json();
-// }
-
-// export default async function CategoryPage({
-//   params,
-// }: {
-//   params: Promise<{ "category-slug": string }>;
-// }) {
-
-//   const { "category-slug": slug } = await params;
-
-//   const data = await getProducts(slug);
-
-//   if (!data) return notFound();
-
-//   const products = data.products;
-
-//   return (
-
-//     <div className="min-h-screen bg-neutral-950 px-6 md:px-16 py-12 text-white">
-
-//       <div className="mb-12">
-
-//         <h1 className="text-3xl md:text-4xl font-bold">
-//           {data.category.name}
-//         </h1>
-
-//         <p className="text-neutral-400 mt-2">
-//           Browse models in this category.
-//         </p>
-
-//       </div>
-
-//       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-
-//         {products.map((p: any) => (
-//           <ProductCard key={p._id} product={p} />
-//         ))}
-
-//       </div>
-
-//       {products.length === 0 && (
-//         <p className="text-neutral-500 mt-10">
-//           No products found in this category.
-//         </p>
-//       )}
-
-//     </div>
-//   );
-// }
-
-
-
-
-
-
 import { notFound } from "next/navigation";
+import { connectDB } from "@/lib/db";
+import { Category } from "@/models/Category";
+import { Product } from "@/models/Product";
+import { ProductLike } from "@/models/ProductLike";
+import { ProductFavorite } from "@/models/ProductFavorite";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import ProductCard from "@/components/ProductComponents/ProductCard";
-
-async function getProducts(slug: string) {
-
-  const res = await fetch(
-    `${process.env.NEXTAUTH_URL}/api/category/${slug}`,
-    { cache: "no-store" }
-  );
-
-  if (!res.ok) return null;
-
-  return res.json();
-
-}
 
 export default async function CategoryPage({
   params,
@@ -91,12 +16,46 @@ export default async function CategoryPage({
 
   const { "category-slug": slug } = await params;
 
-  const data = await getProducts(slug);
+  await connectDB();
 
-  if (!data) return notFound();
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
 
-  const products = data.products ?? [];
+  const category = await Category.findOne({ slug });
 
+  if (!category) return notFound();
+
+  const products = await Product.find({
+    category: category._id,
+    status: "APPROVED",
+    isDeleted: false
+  })
+  .populate("createdBy","username")
+  .sort({createdAt:-1})
+  .lean();
+
+  let likedIds = new Set<string>();
+  let savedIds = new Set<string>();
+
+  if(userId){
+
+    const likes = await ProductLike.find({ user:userId }).select("product");
+    likedIds = new Set(likes.map((l:any)=>l.product.toString()));
+
+    const favorites = await ProductFavorite.find({ user:userId }).select("product");
+    savedIds = new Set(favorites.map((f:any)=>f.product.toString()));
+
+  }
+
+const result = products.map((p:any)=>{
+  const plain = JSON.parse(JSON.stringify(p));
+
+  return {
+    ...plain,
+    liked: likedIds.has(p._id.toString()),
+    saved: savedIds.has(p._id.toString())
+  }
+});
   return (
 
     <div className="min-h-screen bg-neutral-950 px-6 md:px-16 py-12 text-white">
@@ -104,7 +63,7 @@ export default async function CategoryPage({
       <div className="mb-12">
 
         <h1 className="text-3xl md:text-4xl font-bold">
-          {data.category.name}
+          {category.name}
         </h1>
 
         <p className="text-neutral-400 mt-2">
@@ -113,12 +72,12 @@ export default async function CategoryPage({
 
       </div>
 
-      {products.length > 0 ? (
+      {result.length > 0 ? (
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
-          {products.map((p: any) => (
-            <ProductCard key={p._id} product={p} />
+          {result.map((p:any)=>(
+            <ProductCard key={p._id} product={p}/>
           ))}
 
         </div>
