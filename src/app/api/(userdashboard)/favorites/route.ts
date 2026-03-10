@@ -10,8 +10,6 @@ import { ProductLike } from "@/models/ProductLike";
 // GET FAVORITES
 //////////////////////////////////////////////////////
 
-
-
 export async function GET() {
 
   await connectDB();
@@ -26,7 +24,7 @@ export async function GET() {
   ////////////////////////////////////////////////////
 
   const favorites = await ProductFavorite.find({
-    user: userId,
+    user: userId
   })
     .populate({
       path: "product",
@@ -34,8 +32,8 @@ export async function GET() {
         "title slug price thumbnail createdBy likesCount favoritesCount viewsCount",
       populate: {
         path: "createdBy",
-        select: "username",
-      },
+        select: "username"
+      }
     })
     .sort({ createdAt: -1 })
     .lean();
@@ -45,7 +43,7 @@ export async function GET() {
   ////////////////////////////////////////////////////
 
   const likes = await ProductLike.find({
-    user: userId,
+    user: userId
   }).select("product");
 
   const likedIds = new Set(
@@ -63,13 +61,12 @@ export async function GET() {
     product: {
       ...f.product,
       liked: likedIds.has(f.product._id.toString()),
-      saved: true, // already favorite
-    },
+      saved: true
+    }
 
   }));
 
   return NextResponse.json(result);
-
 }
 
 //////////////////////////////////////////////////////
@@ -77,7 +74,9 @@ export async function GET() {
 //////////////////////////////////////////////////////
 
 export async function POST(req: Request) {
+
   try {
+
     await connectDB();
 
     const session = await getServerSession(authOptions);
@@ -98,46 +97,76 @@ export async function POST(req: Request) {
       );
     }
 
-    //////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    // CHECK PRODUCT EXISTS
+    ////////////////////////////////////////////////////
+
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    ////////////////////////////////////////////////////
     // CHECK IF ALREADY FAVORITED
-    //////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
 
     const existing = await ProductFavorite.findOne({
       user: session.user.id,
-      product: productId,
+      product: productId
     });
 
+    ////////////////////////////////////////////////////
+    // REMOVE FAVORITE
+    ////////////////////////////////////////////////////
+
     if (existing) {
+
       await ProductFavorite.deleteOne({ _id: existing._id });
 
-      await Product.updateOne(
-        { _id: productId },
-        { $inc: { favoritesCount: -1 } }
+      product.favoritesCount = Math.max(
+        (product.favoritesCount || 0) - 1,
+        0
       );
 
-      return NextResponse.json({ favorited: false });
+      await product.save();
+
+      return NextResponse.json({
+        favorited: false,
+        favoritesCount: product.favoritesCount
+      });
+
     }
 
-    //////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
     // CREATE FAVORITE
-    //////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
 
     await ProductFavorite.create({
       user: session.user.id,
-      product: productId,
+      product: productId
     });
 
-    await Product.updateOne(
-      { _id: productId },
-      { $inc: { favoritesCount: 1 } }
-    );
+    product.favoritesCount = (product.favoritesCount || 0) + 1;
 
-    return NextResponse.json({ favorited: true });
+    await product.save();
+
+    return NextResponse.json({
+      favorited: true,
+      favoritesCount: product.favoritesCount
+    });
+
   } catch (error) {
-    console.error(error);
+
+    console.error("FAVORITE ERROR:", error);
+
     return NextResponse.json(
       { error: "Failed to toggle favorite" },
       { status: 500 }
     );
+
   }
 }

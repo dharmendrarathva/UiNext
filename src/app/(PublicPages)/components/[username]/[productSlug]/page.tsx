@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CardFooter from "@/components/ProductComponents/CardFooter";
+import { Category } from "@/models/Category";
 
 export default function ProductPage({
   params,
@@ -21,8 +22,14 @@ export default function ProductPage({
   const [inCart,setInCart] = useState(false);
   const [loading,setLoading] = useState(true);
 
+  const [comments,setComments] = useState<any[]>([]);
+const [commentText,setCommentText] = useState("");
+const [commentLoading,setCommentLoading] = useState(false);
+
   const [showCartPopup,setShowCartPopup] = useState(false);
   const [showLoginPopup,setShowLoginPopup] = useState(false);
+
+
 
   //////////////////////////////////////////////////////
   // LOAD DATA
@@ -58,6 +65,18 @@ export default function ProductPage({
 
   }
 
+  async function loadComments() {
+
+  const res = await fetch(`/api/comment?productId=${product._id}`);
+
+  if(!res.ok) return;
+
+  const data = await res.json();
+
+  setComments(data);
+
+}
+
   useEffect(()=>{
     loadData();
   },[username,productSlug]);
@@ -69,6 +88,9 @@ export default function ProductPage({
   useEffect(()=>{
 
     if(!product?._id) return;
+    if(product?._id){
+    loadComments();
+  }
 
     fetch("/api/views",{
       method:"POST",
@@ -78,11 +100,50 @@ export default function ProductPage({
 
   },[product]);
 
+  async function submitComment(){
+
+  if(!session){
+    setShowLoginPopup(true);
+    return;
+  }
+
+  if(!commentText.trim()) return;
+
+  setCommentLoading(true);
+
+  try{
+
+    const res = await fetch("/api/comment",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({
+        productId:product._id,
+        content:commentText
+      })
+    });
+
+    if(!res.ok) return;
+
+    const newComment = await res.json();
+
+    setComments(prev=>[newComment,...prev]);
+    setCommentText("");
+
+  }catch(err){
+    console.error(err);
+  }
+  finally{
+    setCommentLoading(false);
+  }
+
+}
+
   //////////////////////////////////////////////////////
   // CART
   //////////////////////////////////////////////////////
 
   async function addToCart(){
+    
 
     if(!session){
       setShowLoginPopup(true);
@@ -287,6 +348,75 @@ export default function ProductPage({
         </div>
 
       </div>
+
+      {/* COMMENTS */}
+
+<div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 mt-8">
+
+<h2 className="text-lg font-semibold mb-6">
+Comments
+</h2>
+
+<div className="flex gap-3 mb-6">
+
+<input
+value={commentText}
+onChange={(e)=>setCommentText(e.target.value)}
+placeholder="Write a comment..."
+className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2 outline-none"
+/>
+
+<button
+onClick={submitComment}
+disabled={commentLoading}
+className="bg-yellow-500 text-black px-4 py-2 rounded-lg hover:bg-yellow-400"
+>
+Post
+</button>
+
+</div>
+
+<div className="space-y-5">
+
+{comments.length === 0 && (
+<p className="text-neutral-500">
+No comments yet
+</p>
+)}
+
+{comments.map((c)=>(
+<div key={c._id} className="flex gap-3">
+
+<div className="w-8 h-8 rounded-full bg-neutral-700 overflow-hidden">
+
+{c.user?.image ? (
+<img src={c.user.image} className="w-full h-full object-cover"/>
+) : (
+<div className="flex items-center justify-center h-full text-sm">
+{c.user?.username?.[0]?.toUpperCase()}
+</div>
+)}
+
+</div>
+
+<div>
+
+<p className="text-sm font-semibold">
+@{c.user?.username}
+</p>
+
+<p className="text-neutral-300 text-sm">
+{c.content}
+</p>
+
+</div>
+
+</div>
+))}
+
+</div>
+
+</div>
 
     </div>
 

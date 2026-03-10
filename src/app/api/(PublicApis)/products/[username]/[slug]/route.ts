@@ -8,6 +8,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+import "@/models/Category"; // important for populate
+
+
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ username: string; slug: string }> }
@@ -88,9 +92,7 @@ export async function GET(
 
     }
 
-    ////////////////////////////////////////////////////
-    // RESPONSE
-    ////////////////////////////////////////////////////
+  
 
     return NextResponse.json({
       ...product,

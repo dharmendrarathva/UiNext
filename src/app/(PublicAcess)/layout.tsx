@@ -3,6 +3,7 @@ import Footer from "@/components/layouts/Footer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+
 export default async function PublicLayout({
   children,
 }: {

@@ -56,42 +56,40 @@ const result = products.map((p:any)=>{
     saved: savedIds.has(p._id.toString())
   }
 });
-  return (
+return (
 
-    <div className="min-h-screen bg-neutral-950 px-6 md:px-16 py-12 text-white">
+  <div>
 
-      <div className="mb-12">
+    <div className="mb-10">
 
-        <h1 className="text-3xl md:text-4xl font-bold">
-          {category.name}
-        </h1>
+      <h1 className="text-3xl md:text-4xl font-bold">
+        {category.name}
+      </h1>
 
-        <p className="text-neutral-400 mt-2">
-          Browse models in this category.
-        </p>
-
-      </div>
-
-      {result.length > 0 ? (
-
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-
-          {result.map((p:any)=>(
-            <ProductCard key={p._id} product={p}/>
-          ))}
-
-        </div>
-
-      ) : (
-
-        <p className="text-neutral-500 mt-10">
-          No products found in this category.
-        </p>
-
-      )}
+      <p className="text-neutral-400 mt-2">
+        Browse models in this category.
+      </p>
 
     </div>
 
-  );
+    {result.length > 0 ? (
 
+<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {result.map((p:any)=>(
+          <ProductCard key={p._id} product={p}/>
+        ))}
+
+      </div>
+
+    ) : (
+
+      <p className="text-neutral-500">
+        No products found in this category.
+      </p>
+
+    )}
+
+  </div>
+
+);
 }

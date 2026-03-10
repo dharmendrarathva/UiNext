@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth"; // adjust path if needed
+import { Category } from "@/models/Category";
 
 export async function GET() {
 

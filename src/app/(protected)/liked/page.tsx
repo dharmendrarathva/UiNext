@@ -22,8 +22,9 @@ export default function LikedPage() {
 
     try{
 
-      const res = await fetch("/api/likes")
-
+const res = await fetch("/api/favorites", {
+  cache: "no-store"
+})
       if(!res.ok) return
 
       const data = await res.json()

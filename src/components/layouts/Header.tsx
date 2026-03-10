@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Session } from "next-auth";
 import { FaShoppingCart } from "react-icons/fa";
 import UserMenu from "@/components/layouts/UserMenu";
+import CategoryList from "@/components/layouts/CategoryList";
 
 interface HeaderProps {
   session: Session | null;
@@ -23,6 +24,8 @@ export default function Header({ session }: HeaderProps) {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6 text-sm text-neutral-400">
+              <CategoryList />
+
              <Link href="/allproducts" className="hover:text-white transition">
               Components
             </Link>
