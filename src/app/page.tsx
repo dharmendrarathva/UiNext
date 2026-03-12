@@ -12,6 +12,8 @@ interface UserItem {
   name: string;
 }
 
+
+
 export default function Home() {
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +79,6 @@ export default function Home() {
 
       </div>
 
-      {/* USERS MOVING CARDS */}
 
       {!loading && users.length > 0 && (
         <InfiniteMovingCardsDemo users={users} />

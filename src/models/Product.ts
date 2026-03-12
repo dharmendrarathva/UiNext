@@ -9,7 +9,7 @@ interface ProductDoc {
   slug: string;
   description: string;
   price: number;
-    category: mongoose.Types.ObjectId;
+  category: mongoose.Types.ObjectId;
   thumbnail?: string;
   createdBy: mongoose.Types.ObjectId;
   status: ProductStatus;

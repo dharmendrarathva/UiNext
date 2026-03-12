@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import PolicyToUpload from "@/components/Overlays/PolicyToUpload";
-import ProductCard from "@/components/ProductComponents/ProductCard";
+
+import ProductList from "@/components/ProductComponents/ProductList";
+import CreateProduct from "@/components/ProductComponents/CreateProduct";
+import EditProduct from "@/components/ProductComponents/EditProduct";
+
 import { Product as ProductCardProduct } from "@/types/Product";
 import { Category } from "@/types/Category";
-
 
 interface Product {
   _id: string;
@@ -20,113 +23,125 @@ interface Product {
 export default function MyProducts() {
 
   const [products, setProducts] = useState<Product[]>([]);
-
-const [form, setForm] = useState({
-  title: "",
-  description: "",
-  price: 0,
-  category: "",
-});
+  const [publishedProducts, setPublishedProducts] = useState<ProductCardProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [createModal, setCreateModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
-  
-const [policyAccepted, setPolicyAccepted] = useState<boolean | null>(null);
-const [publishedProducts, setPublishedProducts] = useState<ProductCardProduct[]>([]);
 
-const [categories, setCategories] = useState<Category[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-const [filter, setFilter] = useState<
-  "ALL" | "APPROVED" | "PENDING" | "DRAFT" | "REJECTED" | "MY_PUBLISHED"
->("ALL");
 
+  const [policyAccepted, setPolicyAccepted] = useState<boolean | null>(null);
 
-const filteredProducts =
-  filter === "ALL"
-    ? products
-    : products.filter((p) => p.status === filter);
+  const [filter, setFilter] = useState<
+    "ALL" | "APPROVED" | "PENDING" | "DRAFT" | "REJECTED" | "MY_PUBLISHED"
+  >("ALL");
 
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    price: 0,
+    category: "",
+  });
 
-async function checkPolicy() {
-  try {
+  const filteredProducts =
+    filter === "ALL"
+      ? products
+      : products.filter((p) => p.status === filter);
 
-    const res = await fetch("/api/users/policy");
+  async function checkPolicy() {
 
-    if (!res.ok) {
+    try {
+
+      const res = await fetch("/api/users/policy");
+
+      if (!res.ok) {
+        setPolicyAccepted(false);
+        return;
+      }
+
+      const data = await res.json();
+
+      setPolicyAccepted(Boolean(data.policyAccepted));
+
+    } catch {
+
       setPolicyAccepted(false);
-      return;
+
     }
 
+  }
+
+  async function loadCategories() {
+
+    const res = await fetch("/api/admin/cat-management");
+
     const data = await res.json();
 
-    setPolicyAccepted(Boolean(data.policyAccepted));
-
-  } catch (error) {
-
-    console.error("Policy check failed:", error);
-    setPolicyAccepted(false);
+    setCategories(data);
 
   }
-}
-async function loadCategories() {
-  const res = await fetch("/api/admin/cat-management");
-  const data = await res.json();
-  setCategories(data);
-}
 
   async function loadProducts() {
-    const res = await fetch("/api/users/products");
-    const data = await res.json();
-    setProducts(data);
-  }
 
+    const res = await fetch("/api/users/products");
+
+    const data = await res.json();
+
+    setProducts(data);
+
+  }
 
   async function loadPublishedProducts() {
 
-  const res = await fetch("/api/products");
+    const res = await fetch("/api/products");
 
-  if (!res.ok) return;
+    if (!res.ok) return;
 
-  const data = await res.json();
+    const data = await res.json();
 
-  const myProducts = data.filter(
-    (p: any) => products.some((u) => u._id === p._id)
-  );
+    const myProducts = data.filter((p: any) =>
+      products.some((u) => u._id === p._id)
+    );
 
-  setPublishedProducts(myProducts);
+    setPublishedProducts(myProducts);
 
-}
-
-useEffect(() => {
-
-  if (filter === "MY_PUBLISHED" && publishedProducts.length === 0) {
-    loadPublishedProducts();
   }
 
-}, [filter]);
+  useEffect(() => {
 
-useEffect(() => {
-  loadProducts();
-  checkPolicy();
-  loadCategories();
-}, []);
+    loadProducts();
+    loadCategories();
+    checkPolicy();
 
+  }, []);
 
- function handleChange(
-  e: React.ChangeEvent<
-    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-  >
-) {
-  setForm({
-    ...form,
-    [e.target.name]:
-      e.target.name === "price"
-        ? Number(e.target.value)
-        : e.target.value,
-  });
-}
+  useEffect(() => {
 
+    if (filter === "MY_PUBLISHED" && publishedProducts.length === 0) {
+
+      loadPublishedProducts();
+
+    }
+
+  }, [filter]);
+
+  function handleChange(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) {
+
+    setForm({
+      ...form,
+      [e.target.name]:
+        e.target.name === "price"
+          ? Number(e.target.value)
+          : e.target.value,
+    });
+
+  }
 
   async function createProduct(status: "DRAFT" | "PENDING") {
 
@@ -144,33 +159,33 @@ useEffect(() => {
     setCreateModal(false);
 
     setForm({
-  title: "",
-  description: "",
-  price: 0,
-  category: "",
-});
+      title: "",
+      description: "",
+      price: 0,
+      category: "",
+    });
 
     loadProducts();
+
   }
 
+  function startEdit(product: Product) {
 
-function startEdit(product: Product) {
+    setEditingProduct(product);
 
-  setEditingProduct(product);
+    setForm({
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      category:
+        typeof product.category === "string"
+          ? product.category
+          : product.category._id,
+    });
 
-  setForm({
-    title: product.title,
-    description: product.description,
-    price: product.price,
-    category:
-      typeof product.category === "string"
-        ? product.category
-        : product.category._id,
-  });
+    setEditModal(true);
 
-  setEditModal(true);
-}
-
+  }
 
   async function updateProduct() {
 
@@ -185,13 +200,15 @@ function startEdit(product: Product) {
     setEditModal(false);
     setEditingProduct(null);
 
-   setForm({
-  title: "",
-  description: "",
-  price: 0,
-  category: "",
-});
+    setForm({
+      title: "",
+      description: "",
+      price: 0,
+      category: "",
+    });
+
     loadProducts();
+
   }
 
   async function deleteProduct(id: string) {
@@ -201,25 +218,21 @@ function startEdit(product: Product) {
     });
 
     loadProducts();
+
   }
 
+  async function submitProduct(id: string) {
 
-  function statusBadge(status: string) {
+    await fetch(`/api/users/products/${id}/submit`, {
+      method: "PATCH",
+    });
 
-    if (status === "APPROVED")
-      return "bg-green-500/20 text-green-400";
+    loadProducts();
 
-    if (status === "REJECTED")
-      return "bg-red-500/20 text-red-400";
-
-    if (status === "DRAFT")
-      return "bg-neutral-700 text-neutral-300";
-
-    return "bg-yellow-500/20 text-yellow-400";
   }
-
 
   return (
+
     <div className="min-h-screen bg-neutral-950 text-white p-10">
 
       {/* HEADER */}
@@ -229,312 +242,98 @@ function startEdit(product: Product) {
         <h1 className="text-3xl font-bold text-yellow-400">
           My Products
         </h1>
-<PolicyToUpload
-  open={showPolicy}
-  onClose={() => setShowPolicy(false)}
-  onAccepted={() => {
-    setShowPolicy(false);
-    setPolicyAccepted(true);
-    setCreateModal(true);
-  }}
-/>
 
-    <button
-  onClick={() => {
-    if (!policyAccepted) {
-      setShowPolicy(true);
-    } else {
-      setCreateModal(true);
-    }
-  }}
-  className="bg-yellow-500 hover:bg-yellow-600 px-5 py-2 rounded-lg font-semibold"
->
-  + Create Product
-</button>
+        <PolicyToUpload
+          open={showPolicy}
+          onClose={() => setShowPolicy(false)}
+          onAccepted={() => {
+            setShowPolicy(false);
+            setPolicyAccepted(true);
+            setCreateModal(true);
+          }}
+        />
+
+        <button
+          onClick={() => {
+            if (!policyAccepted) {
+              setShowPolicy(true);
+            } else {
+              setCreateModal(true);
+            }
+          }}
+          className="bg-yellow-500 hover:bg-yellow-600 px-5 py-2 rounded-lg font-semibold"
+        >
+          + Create Product
+        </button>
 
       </div>
 
-
+      {/* FILTERS */}
 
       <div className="flex flex-wrap gap-3 mb-8">
 
-{["ALL","APPROVED","PENDING","DRAFT","REJECTED","MY_PUBLISHED"].map((status) => (
-    <button
-      key={status}
-      onClick={() => setFilter(status as any)}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition
-        ${
-          filter === status
-            ? "bg-yellow-500 text-black"
-            : "bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
-        }`}
-    >
-{status === "MY_PUBLISHED" ? "My Published" : status}  
-  </button>
+        {[
+          "ALL",
+          "APPROVED",
+          "PENDING",
+          "DRAFT",
+          "REJECTED",
+          "MY_PUBLISHED",
+        ].map((status) => (
 
-  ))}
+          <button
+            key={status}
+            onClick={() => setFilter(status as any)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition
+            ${
+              filter === status
+                ? "bg-yellow-500 text-black"
+                : "bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
+            }`}
+          >
+            {status === "MY_PUBLISHED" ? "My Published" : status}
+          </button>
 
-</div>
-
-      {/* PRODUCT GRID */}
-
-   <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-
-{filter === "MY_PUBLISHED" ? (
-
-  publishedProducts.map((p) => (
-    <ProductCard key={p._id} product={p} />
-  ))
-
-) : (
-
-  filteredProducts.map((p) => (
-
-    <div
-      key={p._id}
-      className="bg-neutral-900 border border-neutral-800 rounded-xl p-6"
-    >
-
-      <h3 className="text-xl font-semibold mb-2">
-        {p.title}
-      </h3>
-
-      <p className="text-neutral-400 text-sm mb-3">
-        {p.description}
-      </p>
-
-      <p className="text-lg mb-3">
-        ₹{p.price}
-      </p>
-
-<p className="text-sm text-yellow-400 mt-1">
-  {p.category && typeof p.category !== "string" ? p.category.name : ""}
-</p>
-
-      <span className={`text-xs px-3 py-1 rounded-full ${statusBadge(p.status)}`}>
-        {p.status}
-      </span>
-
-      {p.status === "REJECTED" && (
-        <div className="mt-3 text-sm text-red-400">
-          Reason: {p.rejectionReason}
-        </div>
-      )}
-
-      {p.status === "DRAFT" && (
-        <button
-          onClick={() =>
-            fetch(`/api/users/products/${p._id}/submit`, {
-              method: "PATCH",
-            }).then(loadProducts)
-          }
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm mt-3"
-        >
-          Submit for Review
-        </button>
-      )}
-
-      <div className="flex flex-wrap gap-3 mt-5">
-
-        <button
-          disabled={p.status === "APPROVED"}
-          onClick={() => startEdit(p)}
-          className={`flex-1 px-3 py-2 rounded-lg text-sm ${
-            p.status === "APPROVED"
-              ? "bg-neutral-800 text-neutral-500 cursor-not-allowed"
-              : "bg-neutral-700 hover:bg-neutral-600"
-          }`}
-        >
-          Edit
-        </button>
-
-        <button
-          onClick={() => deleteProduct(p._id)}
-          className="flex-1 bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm"
-        >
-          Delete
-        </button>
+        ))}
 
       </div>
 
-    </div>
+      {/* PRODUCT LIST */}
 
-  ))
+      <ProductList
+        filter={filter}
+        products={filteredProducts}
+        publishedProducts={publishedProducts}
+        onEdit={startEdit}
+        onDelete={deleteProduct}
+        onSubmit={submitProduct}
+      />
 
-)}
+      {/* CREATE PRODUCT */}
 
-</div>
+      <CreateProduct
+        open={createModal}
+        form={form}
+        categories={categories}
+        onChange={handleChange}
+        onClose={() => setCreateModal(false)}
+        onDraft={() => createProduct("DRAFT")}
+        onSubmit={() => createProduct("PENDING")}
+      />
 
-      {/* CREATE MODAL */}
+      {/* EDIT PRODUCT */}
 
-      {createModal && (
-
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-8 w-full max-w-lg">
-
-            <h2 className="text-xl font-semibold mb-6 text-yellow-400">
-              Create Product
-            </h2>
-
-            <div className="space-y-4">
-
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="Title"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
-              />
-
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                placeholder="Description"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
-              />
-
-              <input
-                name="price"
-                type="number"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="Price"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
-              />
-<select
-  name="category"
-  value={form.category}
-  onChange={(e) =>
-    setForm({ ...form, category: e.target.value })
-  }
-  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
->
-  <option value="">Select Category</option>
-
-  {categories.map((cat) => (
-    <option key={cat._id} value={cat._id}>
-      {cat.name}
-    </option>
-  ))}
-</select>
-              <div className="flex gap-3 pt-4">
-
-                <button
-                  onClick={() => createProduct("DRAFT")}
-                  className="flex-1 bg-neutral-700 hover:bg-neutral-600 py-2 rounded-lg"
-                >
-                  Save Draft
-                </button>
-
-                <button
-                  onClick={() => createProduct("PENDING")}
-                className="w-full mt-3 bg-neutral-800 hover:bg-neutral-700 py-2 rounded-lg"
-                >
-                  Submit Review
-                </button>
-
-              </div>
-
-              <button
-                onClick={() => setCreateModal(false)}
-                className="w-full mt-3 bg-neutral-800 hover:bg-neutral-700 py-2 rounded-lg"
-              >
-                Cancel
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-      {/* EDIT MODAL */}
-
-      {editModal && (
-
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-8 w-full max-w-lg">
-
-            <h2 className="text-xl font-semibold mb-6 text-yellow-400">
-              Update Product
-            </h2>
-
-            <div className="space-y-4">
-
-              <input
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="Title"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
-              />
-
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                placeholder="Description"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
-              />
-
-              <input
-                name="price"
-                type="number"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="Price"
-                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
-              />
-
-             <select
-  required
-  name="category"
-  value={form.category}
-  onChange={(e) =>
-    setForm({ ...form, category: e.target.value })
-  }
-  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2"
->
-  <option value="">Select Category</option>
-
-  {categories.map((cat) => (
-    <option key={cat._id} value={cat._id}>
-      {cat.name}
-    </option>
-  ))}
-</select>
-
-              <div className="flex gap-3 pt-4">
-
-                <button
-                  onClick={updateProduct}
-                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 py-2 rounded-lg font-semibold"
-                >
-                  Update
-                </button>
-
-                <button
-                  onClick={() => setEditModal(false)}
-                  className="flex-1 bg-neutral-700 hover:bg-neutral-600 py-2 rounded-lg"
-                >
-                  Cancel
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
+      <EditProduct
+        open={editModal}
+        form={form}
+        categories={categories}
+        onChange={handleChange}
+        onClose={() => setEditModal(false)}
+        onUpdate={updateProduct}
+      />
 
     </div>
+
   );
+
 }

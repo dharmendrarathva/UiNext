@@ -13,9 +13,7 @@ export default async function PublicLayout({
 
   return (
     <>
-      <Header session={session} />
       <main>{children}</main>
-      <Footer />
     </>
   );
 }
