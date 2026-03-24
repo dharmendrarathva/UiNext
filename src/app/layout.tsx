@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+
 import Providers from "@/components/Providers";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import Header from "@/components/layouts/Header";
 import Footer from "@/components/layouts/Footer";
+
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "UiSnap",
@@ -16,17 +18,25 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+
   const session = await getServerSession(authOptions);
 
   return (
     <html lang="en">
-      <body className="bg-neutral-950 text-white">
-        <Providers session={session}>
-                    <Header session={session} />
+      <body className="bg-neutral-950 text-white min-h-screen flex flex-col">
 
-          {children}
-          <Footer/>
+        <Providers session={session}>
+
+          <Header session={session} />
+
+          <main className="flex-1">
+            {children}
+          </main>
+
+          <Footer />
+
         </Providers>
+
       </body>
     </html>
   );

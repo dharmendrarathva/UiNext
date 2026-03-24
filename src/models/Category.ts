@@ -5,7 +5,6 @@ import slugify from "slugify";
 interface CategoryDoc extends Document {
   name: string;
   slug: string;
-  description?: string;
   icon?: string;
 }
 
@@ -13,7 +12,6 @@ const CategorySchema = new Schema<CategoryDoc>(
   {
     name: { type: String, required: true, trim: true, unique: true },
     slug: { type: String, lowercase: true, unique: true, index: true },
-    description: { type: String, default: "" },
     icon: { type: String, default: "" },
   },
   { timestamps: true }

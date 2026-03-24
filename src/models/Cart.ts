@@ -8,10 +8,7 @@ const CartItemSchema = new Schema(
       required: true,
     },
 
-    price: {
-      type: Number,
-      required: true,
-    },
+   
   },
   { _id: false }
 );

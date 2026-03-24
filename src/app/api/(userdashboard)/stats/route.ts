@@ -21,20 +21,25 @@ export async function GET() {
       totalProducts,
       viewsAgg,
       totalLikes,
-      totalFavorites,
+      totalFavorites
     ] = await Promise.all([
       Product.countDocuments({
         status: "APPROVED",
-        isDeleted: false,
+        isDeleted: false
       }),
 
       Product.aggregate([
         { $match: { status: "APPROVED", isDeleted: false } },
-        { $group: { _id: null, views: { $sum: "$viewsCount" } } },
+        {
+          $group: {
+            _id: null,
+            views: { $sum: "$viewsCount" }
+          }
+        }
       ]),
 
       ProductLike.countDocuments(),
-      ProductFavorite.countDocuments(),
+      ProductFavorite.countDocuments()
     ]);
 
     //////////////////////////////////////////////////
@@ -45,8 +50,8 @@ export async function GET() {
       {
         $match: {
           status: "APPROVED",
-          isDeleted: false,
-        },
+          isDeleted: false
+        }
       },
 
       {
@@ -54,11 +59,16 @@ export async function GET() {
           from: "categories",
           localField: "category",
           foreignField: "_id",
-          as: "category",
-        },
+          as: "category"
+        }
       },
 
-      { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+      {
+        $unwind: {
+          path: "$category",
+          preserveNullAndEmptyArrays: true
+        }
+      },
 
       {
         $project: {
@@ -67,13 +77,13 @@ export async function GET() {
           likesCount: 1,
           favoritesCount: 1,
           commentsCount: 1,
-          category: "$category.name",
-        },
+          category: "$category.name"
+        }
       },
 
       { $sort: { viewsCount: -1 } },
 
-      { $limit: 20 }, // prevent large responses
+      { $limit: 20 }
     ]);
 
     //////////////////////////////////////////////////
@@ -84,16 +94,16 @@ export async function GET() {
       {
         $match: {
           status: "APPROVED",
-          isDeleted: false,
-        },
+          isDeleted: false
+        }
       },
 
       {
         $group: {
           _id: "$category",
           products: { $sum: 1 },
-          views: { $sum: "$viewsCount" },
-        },
+          views: { $sum: "$viewsCount" }
+        }
       },
 
       {
@@ -101,37 +111,42 @@ export async function GET() {
           from: "categories",
           localField: "_id",
           foreignField: "_id",
-          as: "category",
-        },
+          as: "category"
+        }
       },
 
-      { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+      {
+        $unwind: {
+          path: "$category",
+          preserveNullAndEmptyArrays: true
+        }
+      },
 
       {
         $project: {
           _id: 0,
           name: "$category.name",
           products: 1,
-          views: 1,
-        },
+          views: 1
+        }
       },
 
-      { $sort: { views: -1 } },
+      { $sort: { views: -1 } }
     ]);
 
     //////////////////////////////////////////////////
-    // SAFE RESPONSE
+    // RETURN REAL DATA ONLY
     //////////////////////////////////////////////////
 
     return NextResponse.json({
       totals: {
-        products: totalProducts ?? 0,
-        views: viewsAgg?.[0]?.views ?? 0,
-        likes: totalLikes ?? 0,
-        favorites: totalFavorites ?? 0,
+        products: totalProducts,
+        views: viewsAgg[0]?.views || 0,
+        likes: totalLikes,
+        favorites: totalFavorites
       },
-      products: productStats ?? [],
-      categories: categoryStats ?? [],
+      products: productStats,
+      categories: categoryStats
     });
 
   } catch (error) {
@@ -140,14 +155,7 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        totals: {
-          products: 0,
-          views: 0,
-          likes: 0,
-          favorites: 0,
-        },
-        products: [],
-        categories: [],
+        error: "Failed to fetch analytics"
       },
       { status: 500 }
     );

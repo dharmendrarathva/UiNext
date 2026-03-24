@@ -1,8 +1,3 @@
-
-
-
-
-
 import { connectDB } from "@/lib/db";
 import { Product } from "@/models/Product";
 import { ProductLike } from "@/models/ProductLike";
@@ -10,7 +5,7 @@ import { ProductFavorite } from "@/models/ProductFavorite";
 import { NextResponse } from "next/server";
 
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth"; // adjust path if needed
+import { authOptions } from "@/lib/auth";
 import { Category } from "@/models/Category";
 
 export async function GET() {
@@ -34,6 +29,7 @@ export async function GET() {
       status: "APPROVED",
       isDeleted: false,
     })
+      .select("-price -description -images") // removed fields
       .populate("createdBy", "username")
       .sort({ createdAt: -1 })
       .lean();

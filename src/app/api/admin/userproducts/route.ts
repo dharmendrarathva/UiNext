@@ -7,26 +7,28 @@ import { NextResponse } from "next/server";
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session) return NextResponse.json({}, { status: 401 });
+  if (!session) {
+    return NextResponse.json({}, { status: 401 });
+  }
 
-  if (session.user.role !== "ADMIN")
+  if (session.user.role !== "ADMIN") {
     return NextResponse.json({}, { status: 403 });
+  }
 
   await connectDB();
 
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
 
-  const query: any = {};
+  //////////////////////////////////////////////////////
+  // QUERY
+  //////////////////////////////////////////////////////
 
-  //////////////////////////////////////////////////////
-  // FILTER LOGIC
-  //////////////////////////////////////////////////////
+  const query: any = {};
 
   if (status === "ARCHIVED") {
     query.isDeleted = true;
-  } 
-  else {
+  } else {
     query.isDeleted = false;
 
     if (status && status !== "ALL") {
@@ -34,10 +36,14 @@ export async function GET(req: Request) {
     }
   }
 
+  //////////////////////////////////////////////////////
+  // FETCH PRODUCTS
+  //////////////////////////////////////////////////////
+
   const products = await Product.find(query)
-  .populate("createdBy", "username email")
-  .populate("category", "name slug icon")
-  .sort({ createdAt: -1 });
+    .populate("createdBy", "username email")
+    .populate("category", "name slug icon")
+    .sort({ createdAt: -1 });
 
   return NextResponse.json(products);
 }

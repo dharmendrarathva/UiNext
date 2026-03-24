@@ -5,15 +5,16 @@ import { Session } from "next-auth";
 
 interface ProvidersProps {
   children: React.ReactNode;
-  session: Session | null;
+  session?: Session | null;
 }
 
-export default function Providers({
-  children,
-  session,
-}: ProvidersProps) {
+export default function Providers({ children, session }: ProvidersProps) {
   return (
-    <SessionProvider session={session}>
+    <SessionProvider
+      session={session}
+      refetchOnWindowFocus={false}
+      refetchInterval={0}
+    >
       {children}
     </SessionProvider>
   );

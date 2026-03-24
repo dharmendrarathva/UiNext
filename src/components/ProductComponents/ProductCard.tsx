@@ -3,6 +3,7 @@
 import Link from "next/link";
 import CardFooter from "./CardFooter";
 import { Product } from "@/types/Product";
+import MiniPreview from "../ProductDisplay/MiniPreview";
 
 export default function ProductCard({ product }: { product: Product }) {
 
@@ -15,25 +16,11 @@ export default function ProductCard({ product }: { product: Product }) {
 
       <div className="bg-neutral-950 rounded-2xl overflow-hidden border border-neutral-700 hover:border-neutral-600 transition shadow-lg flex flex-col">
 
-        {/* IMAGE */}
+        {/* MINI PREVIEW */}
 
-        <div className="h-52 bg-neutral-900 flex items-center justify-center overflow-hidden">
+        <div className="bg-neutral-900 border-b border-neutral-800">
 
-          {product.thumbnail ? (
-
-            <img
-              src={product.thumbnail}
-              alt={product.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition"
-            />
-
-          ) : (
-
-            <span className="text-neutral-500">
-              No Image
-            </span>
-
-          )}
+          <MiniPreview codes={product.codes} />
 
         </div>
 
@@ -45,17 +32,7 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.title}
           </h3>
 
-          {product.description && (
-            <p className="text-sm text-neutral-400 mt-2 line-clamp-2">
-              {product.description}
-            </p>
-          )}
-
           <div className="flex justify-between mt-4">
-
-            <span className="text-blue-400 font-bold">
-              ₹{product.price}
-            </span>
 
             <span className="text-xs text-neutral-500">
               @{product.createdBy?.username}

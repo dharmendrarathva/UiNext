@@ -5,14 +5,20 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { User } from "@/models/User";
 import mongoose from "mongoose";
+import { validateComponentCodes } from "@/lib/validateComponentCodes";
+
+//////////////////////////////////////////////////////
+// GET USER PRODUCTS
+//////////////////////////////////////////////////////
 
 export async function GET() {
+
   try {
+
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     await connectDB();
 
@@ -35,30 +41,55 @@ export async function GET() {
     );
 
   }
+
 }
 
 
 
-export async function POST(req: Request) {
+//////////////////////////////////////////////////////
+// CREATE PRODUCT
+//////////////////////////////////////////////////////
 
+export async function POST(req: Request) {
   try {
+
+    //////////////////////////////////////////////////////
+    // SESSION CHECK
+    //////////////////////////////////////////////////////
 
     const session = await getServerSession(authOptions);
 
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
+    //////////////////////////////////////////////////////
+    // DB CONNECTION
+    //////////////////////////////////////////////////////
+
     await connectDB();
+
+    //////////////////////////////////////////////////////
+    // USER VALIDATION
+    //////////////////////////////////////////////////////
 
     const user = await User.findById(session.user.id);
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     if (user.isBlocked) {
-      return NextResponse.json({ error: "Account blocked" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Account blocked" },
+        { status: 403 }
+      );
     }
 
     if (!user.policyAccepted) {
@@ -68,24 +99,54 @@ export async function POST(req: Request) {
       );
     }
 
+    //////////////////////////////////////////////////////
+    // DAILY PRODUCT LIMIT (OPTIONAL)
+    //////////////////////////////////////////////////////
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const productCountToday = await Product.countDocuments({
+      createdBy: session.user.id,
+      createdAt: { $gte: today },
+      isDeleted: false,
+    });
+
+    if (productCountToday >= 10) {
+      return NextResponse.json(
+        { error: "Daily limit reached. You can create only 10 products per day." },
+        { status: 429 }
+      );
+    }
+
+    //////////////////////////////////////////////////////
+    // PARSE BODY
+    //////////////////////////////////////////////////////
+
     let body;
 
     try {
       body = await req.json();
-    } catch {
+    } catch (err) {
+      console.error("Invalid JSON:", err);
+
       return NextResponse.json(
         { error: "Invalid JSON body" },
         { status: 400 }
       );
     }
 
-    const { title, description, price, category, status } = body;
+    const { title, category, status, codes } = body;
 
-    /* ---------------- VALIDATION ---------------- */
+    console.log("CREATE PRODUCT BODY:", body);
 
-    if (!title || !description || !price || !category) {
+    //////////////////////////////////////////////////////
+    // BASIC VALIDATION
+    //////////////////////////////////////////////////////
+
+    if (!title || !category) {
       return NextResponse.json(
-        { error: "All fields (title, description, price, category) are required." },
+        { error: "Title and category are required." },
         { status: 400 }
       );
     }
@@ -97,20 +158,6 @@ export async function POST(req: Request) {
       );
     }
 
-    if (typeof description !== "string" || description.trim().length < 10) {
-      return NextResponse.json(
-        { error: "Description must be at least 10 characters." },
-        { status: 400 }
-      );
-    }
-
-    if (Number(price) <= 0) {
-      return NextResponse.json(
-        { error: "Price must be greater than 0." },
-        { status: 400 }
-      );
-    }
-
     if (!mongoose.Types.ObjectId.isValid(category)) {
       return NextResponse.json(
         { error: "Invalid category selected." },
@@ -118,22 +165,41 @@ export async function POST(req: Request) {
       );
     }
 
-    /* ---------------- CREATE PRODUCT ---------------- */
+    //////////////////////////////////////////////////////
+    // COMPONENT CODE VALIDATION
+    //////////////////////////////////////////////////////
+
+    if (!validateComponentCodes(codes)) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid component code format. Only one implementation type allowed (HTML/CSS/JS OR Tailwind).",
+        },
+        { status: 400 }
+      );
+    }
+
+    //////////////////////////////////////////////////////
+    // CREATE PRODUCT
+    //////////////////////////////////////////////////////
 
     const product = await Product.create({
       title: title.trim(),
-      description: description.trim(),
-      price: Number(price),
       category,
       createdBy: session.user.id,
       status: status ?? "DRAFT",
+      codes,
     });
+
+    //////////////////////////////////////////////////////
+    // RESPONSE
+    //////////////////////////////////////////////////////
 
     return NextResponse.json(product, { status: 201 });
 
   } catch (error) {
 
-    console.error("Product POST error:", error);
+    console.error("CREATE PRODUCT ERROR:", error);
 
     return NextResponse.json(
       { error: "Internal Server Error" },

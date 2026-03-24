@@ -4,32 +4,81 @@ import { Product } from "@/models/Product";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
+import { validateComponentCodes } from "@/lib/validateComponentCodes";
 
-export async function PUT(
+
+export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+
   try {
 
     const { id } = await params;
 
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+
+    await connectDB();
+
+    const product = await Product.findById(id)
+      .populate("category", "name slug");
+
+    if (!product)
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+
+    if (product.createdBy.toString() !== session.user.id)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    return NextResponse.json(product);
+
+  } catch (error) {
+
+    console.error("GET PRODUCT error:", error);
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+
+  }
+
+}
+
+
+//////////////////////////////////////////////////////
+// UPDATE PRODUCT
+//////////////////////////////////////////////////////
+
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+
+  try {
+
+    const { id } = await params;
+
+    const session = await getServerSession(authOptions);
+
+    if (!session)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await connectDB();
 
     const product = await Product.findById(id);
 
-    if (!product) {
+    if (!product)
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
 
-    if (product.createdBy.toString() !== session.user.id) {
+    if (product.createdBy.toString() !== session.user.id)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+
+    //////////////////////////////////////////////////////
+    // PARSE BODY
+    //////////////////////////////////////////////////////
 
     let body;
 
@@ -42,54 +91,53 @@ export async function PUT(
       );
     }
 
-    const { title, description, price, category } = body;
+    const { title, category, codes } = body;
 
-    /* ---------------- VALIDATION ---------------- */
+    //////////////////////////////////////////////////////
+    // VALIDATION
+    //////////////////////////////////////////////////////
 
-    if (!title || !description || !price || !category) {
+    if (!title || !category)
       return NextResponse.json(
-        { error: "All fields (title, description, price, category) are required." },
+        { error: "All fields (title, category) are required." },
         { status: 400 }
       );
-    }
 
-    if (typeof title !== "string" || title.trim().length < 3) {
+    if (typeof title !== "string" || title.trim().length < 3)
       return NextResponse.json(
         { error: "Title must be at least 3 characters." },
         { status: 400 }
       );
-    }
 
-    if (typeof description !== "string" || description.trim().length < 10) {
-      return NextResponse.json(
-        { error: "Description must be at least 10 characters." },
-        { status: 400 }
-      );
-    }
-
-    if (Number(price) <= 0) {
-      return NextResponse.json(
-        { error: "Price must be greater than 0." },
-        { status: 400 }
-      );
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(category)) {
+    if (!mongoose.Types.ObjectId.isValid(category))
       return NextResponse.json(
         { error: "Invalid category selected." },
         { status: 400 }
       );
-    }
 
-    /* ---------------- UPDATE PRODUCT ---------------- */
+    //////////////////////////////////////////////////////
+    // CODE VALIDATION
+    //////////////////////////////////////////////////////
+
+    if (!validateComponentCodes(codes))
+      return NextResponse.json(
+        {
+          message:
+            "Invalid component code format. Provide exactly one implementation type.",
+        },
+        { status: 400 }
+      );
+
+    //////////////////////////////////////////////////////
+    // UPDATE PRODUCT
+    //////////////////////////////////////////////////////
 
     product.set({
       title: title.trim(),
-      description: description.trim(),
-      price: Number(price),
       category,
-      status: "PENDING",        // resubmitted for review
-      rejectionReason: null,    // clear previous rejection
+      codes,
+      status: "PENDING",
+      rejectionReason: null,
     });
 
     await product.save();
@@ -106,12 +154,18 @@ export async function PUT(
     );
 
   }
+
 }
+
+//////////////////////////////////////////////////////
+// SOFT DELETE PRODUCT
+//////////////////////////////////////////////////////
 
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+
   const { id } = await params;
 
   const session = await getServerSession(authOptions);
@@ -132,4 +186,5 @@ export async function DELETE(
   await product.save();
 
   return NextResponse.json({ success: true });
+
 }

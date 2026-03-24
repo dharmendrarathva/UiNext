@@ -81,32 +81,29 @@ export default function StatsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedView, setSelectedView] = useState<'overview' | 'products' | 'categories'>('overview');
 
-  async function loadStats() {
-    try {
-      const res = await fetch(`/api/stats?range=${timeRange}`);
-      if (!res.ok) throw new Error("Failed to fetch stats");
-      const json = await res.json();
-      setData(json);
-    } catch (error) {
-      console.error("Stats fetch error:", error);
-      setData({
-        totals: { 
-          products: 0, 
-          views: 0, 
-          likes: 0, 
-          favorites: 0,
-          revenue: 0,
-          conversionRate: 0
-        },
-        products: [],
-        categories: [],
-        timeline: [],
-      });
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+ async function loadStats() {
+  try {
+    const res = await fetch(`/api/stats?range=${timeRange}`);
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch stats");
     }
+
+    const json = await res.json();
+    setData(json);
+
+  } catch (error) {
+
+    console.error("Stats fetch error:", error);
+
+    // DO NOT insert fake analytics
+    setData(null);
+
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
   }
+}
 
   useEffect(() => {
     loadStats();
@@ -127,18 +124,15 @@ export default function StatsPage() {
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
   };
+if (!loading && data && data.totals.products === 0) {
+  return (
+    <div className="text-center text-neutral-400">
+      No analytics data yet
+    </div>
+  );
+}
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="w-16 h-16 border-4 border-yellow-400 border-t-transparent rounded-full"
-        />
-      </div>
-    );
-  }
+
 
   if (!data) {
     return (

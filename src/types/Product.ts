@@ -23,9 +23,6 @@ export interface ProductDB {
 
   title: string
   slug: string
-  description: string
-  price: number
-  thumbnail?: string
 
   createdBy: string
   category: string
@@ -55,9 +52,15 @@ export interface Product {
 
   title: string
   slug: string
-  description: string
-  price: number
-  thumbnail?: string
+
+  codes?: {
+    html?: string
+    css?: string
+    js?: string
+    react?: string
+    next?: string
+    tailwind?: string
+  }
 
   category?: {
     name: string
@@ -76,7 +79,6 @@ export interface Product {
   }
 
 }
-
 //////////////////////////////////////////////////////
 // DASHBOARD PRODUCT (creator panel)
 //////////////////////////////////////////////////////
@@ -85,8 +87,6 @@ export interface DashboardProduct {
   _id: string
 
   title: string
-  description: string
-  price: number
 
   category: string | Category
 

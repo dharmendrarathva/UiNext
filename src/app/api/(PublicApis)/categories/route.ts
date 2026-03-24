@@ -20,7 +20,6 @@ export async function GET() {
       _id: cat._id.toString(),
       name: cat.name,
       slug: cat.slug,
-      description: cat.description || "",
       icon: cat.icon || "",
     }));
 
@@ -50,7 +49,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const { name, description, icon } = body;
+    const { name, icon } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -89,7 +88,6 @@ export async function POST(req: Request) {
     const category = await Category.create({
       name,
       slug,
-      description,
       icon,
     });
 
@@ -97,7 +95,6 @@ export async function POST(req: Request) {
       _id: category._id.toString(),
       name: category.name,
       slug: category.slug,
-      description: category.description,
       icon: category.icon,
     });
 

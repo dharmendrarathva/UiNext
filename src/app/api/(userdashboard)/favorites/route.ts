@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { ProductFavorite } from "@/models/ProductFavorite";
 import { Product } from "@/models/Product";
+import { ProductLike } from "@/models/ProductLike";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { ProductLike } from "@/models/ProductLike";
 
 //////////////////////////////////////////////////////
 // GET FAVORITES
@@ -29,7 +29,7 @@ export async function GET() {
     .populate({
       path: "product",
       select:
-        "title slug price thumbnail createdBy likesCount favoritesCount viewsCount",
+        "title slug codes createdBy likesCount favoritesCount viewsCount",
       populate: {
         path: "createdBy",
         select: "username"
@@ -42,9 +42,10 @@ export async function GET() {
   // USER LIKES
   ////////////////////////////////////////////////////
 
-  const likes = await ProductLike.find({
-    user: userId
-  }).select("product");
+  const likes = await ProductLike
+    .find({ user: userId })
+    .select("product")
+    .lean();
 
   const likedIds = new Set(
     likes.map((l: any) => l.product.toString())
@@ -54,19 +55,29 @@ export async function GET() {
   // ATTACH FLAGS
   ////////////////////////////////////////////////////
 
-  const result = favorites.map((f: any) => ({
+  const result = favorites
+    .filter((f: any) => f.product) // avoid deleted products
+    .map((f: any) => {
 
-    ...f,
+      const id = f.product._id.toString();
 
-    product: {
-      ...f.product,
-      liked: likedIds.has(f.product._id.toString()),
-      saved: true
-    }
+      return {
+        ...f,
 
-  }));
+        product: {
+          ...f.product,
+          _id: id,
+
+          liked: likedIds.has(id),
+          saved: true
+        }
+
+      };
+
+    });
 
   return NextResponse.json(result);
+
 }
 
 //////////////////////////////////////////////////////
@@ -98,7 +109,7 @@ export async function POST(req: Request) {
     }
 
     ////////////////////////////////////////////////////
-    // CHECK PRODUCT EXISTS
+    // FIND PRODUCT
     ////////////////////////////////////////////////////
 
     const product = await Product.findById(productId);
@@ -111,7 +122,7 @@ export async function POST(req: Request) {
     }
 
     ////////////////////////////////////////////////////
-    // CHECK IF ALREADY FAVORITED
+    // CHECK EXISTING FAVORITE
     ////////////////////////////////////////////////////
 
     const existing = await ProductFavorite.findOne({
@@ -142,7 +153,7 @@ export async function POST(req: Request) {
     }
 
     ////////////////////////////////////////////////////
-    // CREATE FAVORITE
+    // ADD FAVORITE
     ////////////////////////////////////////////////////
 
     await ProductFavorite.create({
@@ -169,4 +180,5 @@ export async function POST(req: Request) {
     );
 
   }
+
 }

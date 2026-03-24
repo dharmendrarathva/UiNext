@@ -8,9 +8,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-import "@/models/Category"; // important for populate
-
-
+import "@/models/Category";
 
 export async function GET(
   req: Request,
@@ -36,33 +34,32 @@ export async function GET(
 
     const user = await User.findOne({ username });
 
-    if (!user) {
+    if (!user)
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
       );
-    }
 
     ////////////////////////////////////////////////////
     // PRODUCT
     ////////////////////////////////////////////////////
 
-  const product = await Product.findOne({
-  slug,
-  createdBy: user._id,
-  status: "APPROVED",
-  isDeleted: false,
-})
-  .populate("createdBy", "username image name")
-  .populate("category", "name slug icon")
-  .lean();
+    const product = await Product.findOne({
+      slug,
+      createdBy: user._id,
+      status: "APPROVED",
+      isDeleted: false,
+    })
+      .select("-price -description -images") // keep removed
+      .populate("createdBy", "username image name")
+      .populate("category", "name slug icon")
+      .lean();
 
-    if (!product) {
+    if (!product)
       return NextResponse.json(
         { error: "Product not found" },
         { status: 404 }
       );
-    }
 
     ////////////////////////////////////////////////////
     // DEFAULT FLAGS
@@ -77,27 +74,30 @@ export async function GET(
 
     if (userId) {
 
-      const like = await ProductLike.findOne({
-        user: userId,
-        product: product._id,
-      });
-
-      const favorite = await ProductFavorite.findOne({
-        user: userId,
-        product: product._id,
-      });
+      const [like, favorite] = await Promise.all([
+        ProductLike.findOne({
+          user: userId,
+          product: product._id,
+        }),
+        ProductFavorite.findOne({
+          user: userId,
+          product: product._id,
+        }),
+      ]);
 
       liked = !!like;
       saved = !!favorite;
-
     }
 
-  
+    ////////////////////////////////////////////////////
+    // RESPONSE
+    ////////////////////////////////////////////////////
 
     return NextResponse.json({
       ...product,
       liked,
       saved,
+      codes: product.codes ?? null,
     });
 
   } catch (error) {

@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const { name, description, icon } = body;
+    const { name, icon } = body;
 
     if (!name) {
 
@@ -87,7 +87,6 @@ export async function POST(req: Request) {
     const category = await Category.create({
       name,
       slug,
-      description,
       icon,
     });
 

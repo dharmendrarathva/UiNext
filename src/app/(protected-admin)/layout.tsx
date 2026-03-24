@@ -29,7 +29,6 @@ export default async function AdminLayout({
 
   return (
     <>
-      <Header session={session} />
 
       <div className="min-h-screen bg-neutral-950">
         <div className="max-w-7xl mx-auto px-6 py-10">
@@ -37,7 +36,6 @@ export default async function AdminLayout({
         </div>
       </div>
 
-      <Footer />
     </>
   );
 }

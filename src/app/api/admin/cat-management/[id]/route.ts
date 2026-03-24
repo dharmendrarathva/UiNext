@@ -19,7 +19,7 @@ export async function PUT(
 
     const body = await req.json();
 
-    const { name, description, icon } = body;
+    const { name, icon } = body;
 
     //////////////////////////////////////////////////
     // UPDATE SLUG IF NAME CHANGED
@@ -42,7 +42,6 @@ export async function PUT(
       {
         name,
         slug,
-        description,
         icon,
       },
       { new: true }

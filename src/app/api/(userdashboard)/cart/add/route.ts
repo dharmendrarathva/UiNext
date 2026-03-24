@@ -41,7 +41,6 @@ export async function POST(req: Request) {
 
   cart.items.push({
     product: product._id,
-    price: product.price,
   });
 
   await cart.save();

@@ -5,59 +5,67 @@ import ProductCard from "@/components/ProductComponents/ProductCard";
 import { Product } from "@/types/Product";
 
 interface LikeItem {
-  _id: string
-  product: Product
+  _id: string;
+  product: Product | null;
 }
 
 export default function LikedPage() {
 
-  const [likes,setLikes] = useState<LikeItem[]>([])
-  const [loading,setLoading] = useState(true)
+  const [likes, setLikes] = useState<LikeItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   ////////////////////////////////////////////////////
   // LOAD LIKES
   ////////////////////////////////////////////////////
 
-  async function loadLikes(){
+  async function loadLikes() {
 
-    try{
+    try {
 
-const res = await fetch("/api/favorites", {
-  cache: "no-store"
-})
-      if(!res.ok) return
+      const res = await fetch("/api/likes", {
+        cache: "no-store"
+      });
 
-      const data = await res.json()
+      if (!res.ok) return;
 
-      setLikes(data)
+      const data = await res.json();
 
-    }catch(err){
+      // remove deleted products
+      const filtered = data.filter((l: LikeItem) => l.product);
 
-      console.error(err)
+      setLikes(filtered);
 
-    }finally{
+    } catch (err) {
 
-      setLoading(false)
+      console.error(err);
+
+    } finally {
+
+      setLoading(false);
 
     }
 
   }
 
-  useEffect(()=>{
-    loadLikes()
-  },[])
+  ////////////////////////////////////////////////////
+  // INIT
+  ////////////////////////////////////////////////////
+
+  useEffect(() => {
+    loadLikes();
+  }, []);
 
   ////////////////////////////////////////////////////
   // LOADING
   ////////////////////////////////////////////////////
 
-  if(loading){
+  if (loading) {
 
-    return(
+    return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-400">
         Loading liked products...
       </div>
-    )
+    );
 
   }
 
@@ -65,11 +73,11 @@ const res = await fetch("/api/favorites", {
   // EMPTY STATE
   ////////////////////////////////////////////////////
 
-  if(likes.length === 0){
+  if (likes.length === 0) {
 
-    return(
+    return (
 
-      <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-950 text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-950 text-white text-center">
 
         <h2 className="text-2xl font-semibold">
           No liked products
@@ -81,7 +89,7 @@ const res = await fetch("/api/favorites", {
 
       </div>
 
-    )
+    );
 
   }
 
@@ -89,7 +97,7 @@ const res = await fetch("/api/favorites", {
   // UI
   ////////////////////////////////////////////////////
 
-  return(
+  return (
 
     <div className="min-h-screen bg-neutral-950 px-6 md:px-16 py-12 text-white">
 
@@ -97,13 +105,13 @@ const res = await fetch("/api/favorites", {
         Liked Products
       </h1>
 
-        <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
-        {likes.map(l => (
+        {likes.map((l) => (
 
           <ProductCard
-            key={l.product._id}
-            product={l.product}
+            key={l._id}
+            product={l.product!}
           />
 
         ))}
@@ -112,6 +120,6 @@ const res = await fetch("/api/favorites", {
 
     </div>
 
-  )
+  );
 
 }

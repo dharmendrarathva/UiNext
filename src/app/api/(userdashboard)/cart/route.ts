@@ -18,7 +18,7 @@ export async function GET() {
   const cart = await Cart.findOne({ user: session.user.id })
     .populate({
   path: "items.product",
-  select: "title slug thumbnail createdBy",
+  select: "title slug  createdBy",
   populate: {
     path: "createdBy",
     select: "username",

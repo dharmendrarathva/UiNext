@@ -6,7 +6,6 @@ interface Category {
   _id: string;
   name: string;
   slug: string;
-  description?: string;
   icon?: string;
 }
 
@@ -16,7 +15,6 @@ export default function AdminCategoriesPage() {
 
   const [form, setForm] = useState({
     name: "",
-    description: "",
     icon: "",
   });
 
@@ -54,7 +52,6 @@ export default function AdminCategoriesPage() {
 
     setForm({
       name: "",
-      description: "",
       icon: "",
     });
 
@@ -67,7 +64,6 @@ export default function AdminCategoriesPage() {
   function handleEdit(cat: Category) {
     setForm({
       name: cat.name,
-      description: cat.description || "",
       icon: cat.icon || "",
     });
 
@@ -119,14 +115,7 @@ export default function AdminCategoriesPage() {
           className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2"
         />
 
-        <textarea
-          placeholder="Description"
-          value={form.description}
-          onChange={(e) =>
-            setForm({ ...form, description: e.target.value })
-          }
-          className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2"
-        />
+       
 
         <button
           type="submit"

@@ -10,6 +10,8 @@ import { ProductFavorite } from "@/models/ProductFavorite";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+import mongoose from "mongoose";
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -27,16 +29,30 @@ export async function GET(
   const currentUserId = session?.user?.id;
 
   ////////////////////////////////////////////////////
-  // USER
+  // USER (ID OR USERNAME)
   ////////////////////////////////////////////////////
 
-  const user = await User.findById(id).select(
-    "name username image bio website followersCount followingCount"
-  );
+  let user;
+
+  if (mongoose.Types.ObjectId.isValid(id)) {
+
+    user = await User.findById(id).select(
+      "name username image bio website followersCount followingCount"
+    );
+
+  } else {
+
+    user = await User.findOne({ username: id }).select(
+      "name username image bio website followersCount followingCount"
+    );
+
+  }
 
   if (!user) {
     return NextResponse.json({}, { status: 404 });
   }
+
+  const userId = user._id;
 
   ////////////////////////////////////////////////////
   // FOLLOW STATUS
@@ -48,7 +64,7 @@ export async function GET(
 
     const follow = await Follow.findOne({
       follower: currentUserId,
-      following: id,
+      following: userId,
     });
 
     isFollowing = !!follow;
@@ -60,7 +76,7 @@ export async function GET(
   ////////////////////////////////////////////////////
 
   const products = await Product.find({
-    createdBy: id,
+    createdBy: userId,
     status: "APPROVED",
     isDeleted: false,
   })
@@ -74,7 +90,7 @@ export async function GET(
 
   if (!currentUserId) {
 
-    const result = products.map((p:any) => ({
+    const result = products.map((p: any) => ({
       ...p,
       liked: false,
       saved: false,
@@ -91,7 +107,7 @@ export async function GET(
   }
 
   ////////////////////////////////////////////////////
-  // GET USER INTERACTIONS
+  // USER INTERACTIONS
   ////////////////////////////////////////////////////
 
   const likes = await ProductLike.find({
@@ -102,20 +118,22 @@ export async function GET(
     user: currentUserId,
   }).select("product");
 
-  const likedIds = new Set(likes.map((l:any)=>l.product.toString()));
-  const savedIds = new Set(favorites.map((f:any)=>f.product.toString()));
+  const likedIds = new Set(
+    likes.map((l: any) => l.product.toString())
+  );
+
+  const savedIds = new Set(
+    favorites.map((f: any) => f.product.toString())
+  );
 
   ////////////////////////////////////////////////////
   // ATTACH FLAGS
   ////////////////////////////////////////////////////
 
-  const result = products.map((p:any)=>({
-
+  const result = products.map((p: any) => ({
     ...p,
-
     liked: likedIds.has(p._id.toString()),
     saved: savedIds.has(p._id.toString()),
-
   }));
 
   ////////////////////////////////////////////////////

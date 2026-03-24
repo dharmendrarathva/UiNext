@@ -7,7 +7,6 @@ interface Category {
   _id: string;
   name: string;
   slug: string;
-  description?: string;
   icon?: string;
 }
 
@@ -90,9 +89,7 @@ export default function CategoriesPage() {
               {cat.icon} {cat.name}
             </h2>
 
-            <p className="text-sm text-neutral-400">
-              {cat.description}
-            </p>
+         
 
           </Link>
 

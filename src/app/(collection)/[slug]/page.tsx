@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import ProductCard from "@/components/ProductComponents/ProductCard";
 
+
 export default async function CategoryPage({
   params,
 }: {
