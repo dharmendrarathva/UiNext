@@ -160,62 +160,57 @@ export default function CardFooter({
   // UI
   //////////////////////////////////////////////////////
 
-  return (
-
-    <div className="mt-6 border border-neutral-700 rounded-2xl px-8 py-4 flex items-center justify-between text-lg bg-neutral-950">
-
-      <div className="flex items-center gap-3 text-neutral-300">
-        <FaEye size={22} className="text-neutral-400" />
-        <span>{format(views)}</span>
-      </div>
-
-<button
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleLike();
-  }}
-  className="flex items-center gap-3"
->
-  {likeLoading ? (
-    <Loader />
-  ) : liked ? (
-    <FaHeart size={22} className="text-red-500" />
-  ) : (
-    <FaRegHeart size={22} className="text-neutral-400 hover:text-red-400 transition" />
-  )}
-
-  <span className={liked ? "text-red-400" : "text-neutral-300"}>
-    {format(likesCount)}
-  </span>
-</button>
-
-
-
-
-
-  <button
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleSave();
-  }}
-  className="flex items-center gap-3"
->
-  {saveLoading ? (
-    <Loader />
-  ) : saved ? (
-    <FaBookmark size={22} className="text-yellow-400" />
-  ) : (
-    <FaRegBookmark size={22} className="text-neutral-400 hover:text-yellow-300 transition" />
-  )}
-
-  <span className={saved ? "text-yellow-300" : "text-neutral-300"}>
-    {format(savesCount)}
-  </span>
-</button>
-
+return (
+  <div className="flex items-center gap-6 text-sm">
+    {/* VIEWS */}
+    <div className="flex items-center gap-1 text-neutral-400">
+      <FaEye size={20} />
+      <span>{format(views)}</span>
     </div>
 
-  );
+    {/* <button
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleLike();
+      }}
+      className="flex items-center gap-1"
+    >
+      {likeLoading ? (
+        <Loader /> // ✅ SAME loader (unchanged)
+      ) : liked ? (
+        <FaHeart size={18} className="text-neutral-300" />
+      ) : (
+        <FaRegHeart size={18} className="text-neutral-400 hover:text-neutral-200 transition" />
+      )}
+
+      <span className={liked ? "text-neutral-200" : "text-neutral-400"}>
+        {format(likesCount)}
+      </span>
+    </button> */}
+
+    {/* SAVE */}
+    <button
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSave();
+      }}
+      className="flex items-center gap-1"
+    >
+      {saveLoading ? (
+        <Loader /> 
+      ) : saved ? (
+        <FaBookmark size={18} className="text-neutral-300" />
+      ) : (
+        <FaRegBookmark size={18} className="text-neutral-400 hover:text-neutral-200 transition" />
+      )}
+
+      <span className={saved ? "text-neutral-200" : "text-neutral-400"}>
+        {format(savesCount)}
+      </span>
+    </button>
+
+  </div>
+);
 }

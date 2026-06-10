@@ -25,16 +25,13 @@ export default async function CategoryLayout({
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex">
 
-      {/* Sidebar */}
       <CategorySidebar categories={categories} />
 
-      {/* Content */}
       <div className="flex-1 p-10">
         <div className="max-w-7xl mx-auto">
           {children}
         </div>
       </div>
-
     </div>
   );
 }

@@ -26,8 +26,8 @@ const Loader = () => {
 
 const StyledWrapper = styled.div`
   .loader {
-    width: 24px;
-    height: 24px;
+    width: 17px;
+    height: 17px;
     transform: rotate(0deg);
     animation: spin 2.4s linear infinite;
   }

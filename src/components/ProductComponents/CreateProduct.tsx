@@ -9,6 +9,7 @@ import { FaHtml5, FaCss3Alt, FaJs } from "react-icons/fa";
 import { SiTailwindcss } from "react-icons/si";
 import { FaUndo } from "react-icons/fa";
 import { componentTemplates } from "@/lib/componentTemplates";
+import SetupModal from "./SetupModal";
 
 type Tab = "html" | "css" | "js" | "tailwind";
 
@@ -18,9 +19,9 @@ interface Props {
   categories: Category[];
   onChange: any;
   onClose: () => void;
-  onSubmit: () => void;
+ onSubmit: () => Promise<void>;
+onDraft: () => Promise<void>;
 }
-
 
 
 
@@ -30,7 +31,8 @@ export default function CreateProduct({
   categories,
   onChange,
   onClose,
-  onSubmit
+  onSubmit,
+  onDraft   // ✅ ADD THIS
 }: Props) {
 
   const [tab,setTab] = useState<Tab>("html");
@@ -38,6 +40,7 @@ export default function CreateProduct({
 
   const [error,setError] = useState("");
   const [showError,setShowError] = useState(false);
+  const [showSetup, setShowSetup] = useState(true);
 
   useEffect(() => {
 
@@ -317,6 +320,11 @@ useEffect(() => {
   }
 
 }, [form.implementation]);
+useEffect(() => {
+  if (open) {
+    setShowSetup(true);
+  }
+}, [open]);
   //////////////////////////////////////////////////////
   // UI
   //////////////////////////////////////////////////////
@@ -326,8 +334,20 @@ useEffect(() => {
   return(
 
 <>
-<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-8 z-50 mt-14">
-
+<SetupModal
+  open={open && showSetup}
+  categories={categories}
+  category={form.category}
+  implementation={form.implementation}
+  onChange={onChange}
+  onClose={onClose}
+  onContinue={() => setShowSetup(false)}
+/>
+<div
+  className={`fixed inset-0 bg-black/80 flex items-center justify-center p-8 z-50 mt-14 ${
+    showSetup ? "pointer-events-none opacity-30" : ""
+  }`}
+>
 <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-7xl h-[85vh] flex flex-col overflow-hidden">
 
 {/* HEADER */}
@@ -342,32 +362,6 @@ placeholder="Component name"
 className="bg-neutral-800 px-3 py-2 rounded w-64"
 />
 
-<select
-name="category"
-value={form.category}
-onChange={onChange}
-className="bg-neutral-800 px-3 py-2 rounded"
->
-<option value="">Select Category</option>
-
-{categories.map(cat=>(
-<option key={cat._id} value={cat._id}>
-{cat.name}
-</option>
-))}
-
-</select>
-
-<select
-name="implementation"
-value={form.implementation}
-onChange={onChange}
-className="bg-neutral-800 px-3 py-2 rounded"
->
-<option value="">Stack</option>
-<option value="HTML">HTML + CSS + JS</option>
-<option value="TAILWIND">Tailwind</option>
-</select>
 
 </div>
 
@@ -488,6 +482,14 @@ if(validate()) onSubmit()
 className="bg-yellow-500 text-black px-4 py-2 rounded"
 >
 Submit
+</button>
+<button
+  onClick={() => {
+    if (validate()) onDraft()
+  }}
+  className="bg-neutral-700 px-4 py-2 rounded"
+>
+  Save Draft
 </button>
 
 </div>

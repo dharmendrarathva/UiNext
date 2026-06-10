@@ -70,13 +70,7 @@ export default function Header({ session }: HeaderProps) {
           ) : (
             <div className="flex items-center gap-5">
 
-              {/* Cart Icon */}
-              <Link
-                href="/mycart"
-                className="text-neutral-400 hover:text-white transition text-lg"
-              >
-                <FaShoppingCart />
-              </Link>
+          
 
               {/* User Menu */}
               <UserMenu user={session.user} />

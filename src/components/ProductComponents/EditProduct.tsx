@@ -27,7 +27,7 @@ interface Props {
   categories: Category[];
   onChange: (e: any) => void;
   onClose: () => void;
-  onUpdate: () => void;
+onUpdate: (status: "DRAFT" | "PENDING") => void;
 }
 
 export default function EditProduct({
@@ -392,24 +392,32 @@ Reset
 
 <div className="p-4 border-t border-neutral-800 flex justify-end gap-3">
 
-<button
-onClick={onClose}
-className="bg-neutral-800 px-4 py-2 rounded"
->
-Cancel
-</button>
+  <button
+    onClick={onClose}
+    className="bg-neutral-800 px-4 py-2 rounded"
+  >
+    Cancel
+  </button>
 
-<button
-onClick={()=>{
-if(validate()) onUpdate()
-}}
-className="bg-yellow-500 text-black px-4 py-2 rounded"
->
-Update
-</button>
+  <button
+    onClick={()=>{
+      if(validate()) onUpdate("DRAFT")
+    }}
+    className="bg-neutral-700 px-4 py-2 rounded"
+  >
+    Save Draft
+  </button>
+
+  <button
+    onClick={()=>{
+      if(validate()) onUpdate("PENDING")
+    }}
+    className="bg-yellow-500 text-black px-4 py-2 rounded"
+  >
+    Submit
+  </button>
 
 </div>
-
 </div>
 
 </div>

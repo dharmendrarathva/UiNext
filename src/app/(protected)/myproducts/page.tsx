@@ -698,26 +698,27 @@ export default function MyProducts() {
     setEditModal(true);
   }
 
-  async function updateProduct() {
-    if (!editingProduct) return;
+async function updateProduct(status: "DRAFT" | "PENDING") {
 
-    const codes = buildCodes();
+  if (!editingProduct) return;
 
-    await fetch(`/api/users/products/${editingProduct._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: form.title,
-        category: form.category,
-        codes
-      })
-    });
+  const codes = buildCodes();
 
-    setEditModal(false);
-    setEditingProduct(null);
-    loadProducts();
-  }
+  await fetch(`/api/users/products/${editingProduct._id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: form.title,
+      category: form.category,
+      codes,
+      status // ✅ important
+    })
+  });
 
+  setEditModal(false);
+  setEditingProduct(null);
+  loadProducts();
+}
   async function deleteProduct(id: string) {
     await fetch(`/api/users/products/${id}`, { method: "DELETE" });
     loadProducts();

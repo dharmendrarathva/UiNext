@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import "./globals.css";
 
 import Providers from "@/components/Providers";
 import Header from "@/components/layouts/Header";
 import Footer from "@/components/layouts/Footer";
+ 
 
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "UiSnap",

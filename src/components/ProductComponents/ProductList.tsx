@@ -6,6 +6,10 @@ import MiniPreview from "@/components/ProductDisplay/MiniPreview";
 import { Category } from "@/types/Category";
 import { Product as ProductCardProduct } from "@/types/Product";
 
+// ✅ Icons
+import { FaRegEdit, FaCloudUploadAlt } from "react-icons/fa";
+import { MdDelete, MdDrafts } from "react-icons/md";
+
 interface Product {
   _id: string;
   title: string;
@@ -76,13 +80,36 @@ export default function ProductList({
   };
 
   ////////////////////////////////////////////
+  // BUTTON STYLES
+  ////////////////////////////////////////////
+
+  const primaryBtn =
+    "w-full flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white " +
+    "bg-gradient-to-r from-blue-600 to-indigo-600 " +
+    "hover:from-blue-500 hover:to-indigo-500 " +
+    "shadow-md hover:shadow-lg active:scale-[0.97] transition";
+
+  const secondaryBtn =
+    "flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium " +
+    "bg-neutral-800 text-neutral-200 border border-neutral-700 " +
+    "hover:bg-neutral-700 hover:border-neutral-600 " +
+    "active:scale-[0.97] transition";
+
+  const dangerBtn =
+    "flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white " +
+    "bg-red-600/90 hover:bg-red-600 " +
+    "shadow-sm hover:shadow-md active:scale-[0.97] transition";
+
+  const disabledBtn =
+    "flex-1 flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium " +
+    "bg-neutral-800 text-neutral-500 cursor-not-allowed";
+
+  ////////////////////////////////////////////
   // UI
   ////////////////////////////////////////////
 
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-
-      {/* Published Products */}
 
       {filter === "MY_PUBLISHED" ? (
         publishedProducts.map((p) => (
@@ -96,27 +123,24 @@ export default function ProductList({
           return (
             <div
               key={p._id}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 transition hover:-translate-y-1 hover:shadow-xl hover:border-neutral-700"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 
+              transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:border-neutral-700"
             >
 
               {/* Preview */}
-
               <div className="aspect-video bg-neutral-950 border-b border-neutral-800">
                 <MiniPreview codes={p.codes} />
               </div>
 
               {/* Content */}
-
               <div className="flex flex-col flex-1 p-5">
 
                 {/* Title */}
-
                 <h3 className="text-lg font-semibold text-white mb-3 line-clamp-1">
                   {p.title}
                 </h3>
 
                 {/* Tags */}
-
                 <div className="flex flex-wrap gap-2 mb-3">
 
                   {implementation && (
@@ -126,62 +150,67 @@ export default function ProductList({
                   )}
 
                   <span
-                    className={`text-xs px-3 py-1 rounded-full ${getStatusStyle(
+                    className={`text-xs px-3 py-1 rounded-full flex items-center gap-1 ${getStatusStyle(
                       p.status
                     )}`}
                   >
+                    {p.status === "DRAFT" && <MdDrafts size={14} />}
                     {p.status}
                   </span>
-                  
-
                 </div>
 
                 {/* Rejection Message */}
-
                 {p.status === "REJECTED" && (
-                  <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-sm text-red-400">
+                  <div className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
                     {p.rejectionReason}
                   </div>
                 )}
 
                 {/* Submit Button */}
-
-                {p.status === "DRAFT" && (
-                  <button
-                    onClick={() => onSubmit(p._id)}
-                    className="mb-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium transition hover:bg-blue-700"
-                  >
-                    Submit for Review
-                  </button>
-                )}
+                
 
                 {/* Actions */}
+<div className="mt-auto pt-4 flex flex-col gap-3">
 
-                <div className="mt-auto flex gap-3 pt-4">
+ 
 
-                  <button
-                    disabled={p.status === "APPROVED"}
-                    onClick={() => onEdit(p)}
-                    className={`flex-1 rounded-lg px-4 py-2 text-sm transition ${
-                      p.status === "APPROVED"
-                        ? "cursor-not-allowed bg-neutral-800 text-neutral-500"
-                        : "bg-neutral-800 hover:bg-neutral-700"
-                    }`}
-                  >
-                    Edit
-                  </button>
+  <div className="flex gap-3">
+    <button
+      disabled={p.status === "APPROVED"}
+      onClick={() => onEdit(p)}
+      className={
+        p.status === "APPROVED"
+          ? disabledBtn
+          : secondaryBtn
+      }
+    >
+      <FaRegEdit size={14} />
+      Edit
+    </button>
 
-                  <button
-                    onClick={() => onDelete(p._id)}
-                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm transition hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
+    <button
+      onClick={() => onDelete(p._id)}
+      className={dangerBtn}
+    >
+      <MdDelete size={16} />
+      Delete
+    </button>
+  </div>
 
-                </div>
+   {/* PRIMARY ACTION */}
+  {p.status === "DRAFT" && (
+    <button
+      onClick={() => onSubmit(p._id)}
+      className={primaryBtn}
+    >
+      <FaCloudUploadAlt size={16} />
+      Submit for Review
+    </button>
+  )}
+
+</div>
 
               </div>
-
             </div>
           );
         })

@@ -91,8 +91,7 @@ export async function PUT(
       );
     }
 
-    const { title, category, codes } = body;
-
+const { title, category, codes, status } = body;
     //////////////////////////////////////////////////////
     // VALIDATION
     //////////////////////////////////////////////////////
@@ -136,7 +135,7 @@ export async function PUT(
       title: title.trim(),
       category,
       codes,
-      status: "PENDING",
+status: status ?? product.status,
       rejectionReason: null,
     });
 

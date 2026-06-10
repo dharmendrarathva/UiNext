@@ -36,11 +36,11 @@ export default function AllProducts() {
       <div className="mb-12">
 
         <h1 className="text-3xl md:text-4xl font-bold">
-          Explore Marketplace
+          Explore
         </h1>
 
         <p className="text-neutral-400 mt-2">
-          Discover premium 3D models crafted by talented creators.
+          Discover Components crafted by talented creators.
         </p>
 
       </div>

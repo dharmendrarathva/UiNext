@@ -8,9 +8,7 @@ export default function MiniPreview({ codes }: { codes?: any }) {
 
     if (!codes) return null;
 
-    //////////////////////////////////////////////////////
-    // TAILWIND PREVIEW
-    //////////////////////////////////////////////////////
+
 
     if (codes.tailwind && codes.tailwind.trim()) {
 
@@ -67,7 +65,6 @@ ${codes.tailwind}
 <meta charset="UTF-8"/>
 
 <style>
-
 *{box-sizing:border-box}
 
 html,body{
@@ -77,9 +74,16 @@ width:100%;
 display:flex;
 align-items:center;
 justify-content:center;
-background:#111;
+background:#2B2B2B;
 font-family:system-ui;
+
+overflow:hidden;
 }
+
+::-webkit-scrollbar{
+display:none;
+}
+
 
 ${codes.css ?? ""}
 
@@ -89,8 +93,9 @@ ${codes.css ?? ""}
 
 <body>
 
+<div id="preview-root">
 ${codes.html}
-
+</div>
 <script>
 
 try{
@@ -120,12 +125,14 @@ document.body.innerHTML += "<pre style='color:red'>"+e+"</pre>";
     );
   }
 
-  return (
-    <iframe
+return (
+<div className="w-full h-56 md:h-64 overflow-hidden rounded-t-2xl bg-neutral-900"> 
+     <iframe
       loading="lazy"
       sandbox="allow-scripts"
       srcDoc={preview}
-      className="w-full h-40 border-0"
+      className="w-full h-full border-0"
     />
-  );
+  </div>
+);
 }

@@ -8,7 +8,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import ProductCard from "@/components/ProductComponents/ProductCard";
 
-
 export default async function CategoryPage({
   params,
 }: {
@@ -55,7 +54,6 @@ export default async function CategoryPage({
       saved: savedIds.has(p._id.toString()),
     };
   });
-
   return (
     <div>
 
@@ -71,14 +69,11 @@ export default async function CategoryPage({
 
       {products.length > 0 ? (
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-
+<div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((p: any) => (
             <ProductCard key={p._id} product={p} />
           ))}
-
         </div>
-
       ) : (
 
         <p className="text-neutral-500">
@@ -86,7 +81,6 @@ export default async function CategoryPage({
         </p>
 
       )}
-
     </div>
   );
 }

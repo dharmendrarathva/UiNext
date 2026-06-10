@@ -1,4 +1,8 @@
 @import "tailwindcss";
+
+/* REQUIRED in v4 */
+@layer theme, base, components, utilities;
+@tailwind utilities;
 @import "tw-animate-css";
 .shimmer {
   position: relative;
