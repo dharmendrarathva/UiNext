@@ -25,14 +25,20 @@ export default function InfiniteMovingCardsDemo({
 }));
 
   return (
-    <div className="w-full overflow-hidden py-16">
+    <div className="w-full overflow-hidden py-6">
+     <div className="container mx-auto px-4 mb-12 flex justify-center">
+  <h2 className="relative text-4xl font-bold text-white uppercase tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+    <span className="relative z-10">Creators Who Dominate</span>
+    {/* Underlying neon glow effect */}
+    <span className="absolute -inset-1 blur-md bg-amber-500/20 -z-10 rounded-full"></span>
+  </h2>
+</div>
 
       <InfiniteMovingCards
         items={items}
         direction="right"
-        speed="normal"
+        speed="slow"
       />
-
     </div>
   );
 }

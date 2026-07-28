@@ -10,25 +10,46 @@ export const metadata: Metadata = {
 // Static placeholder posts (SSR)
 const posts = [
   {
-    slug: "design-systems-explained",
-    title: "Design Systems Explained",
+    slug: "why-ready-made-components",
+    title: "Why Ready-Made Components Are the Future of Web Development",
     excerpt:
-      "A practical guide to building scalable design systems for modern web applications.",
+      "Discover how pre-built UI libraries like UiSnap accelerate development without compromising on quality or customization.",
     date: "March 2026",
   },
   {
-    slug: "performance-first-ui",
-    title: "Performance-First UI Components",
+    slug: "getting-started-uisnap",
+    title: "Getting Started with UiSnap: Build Faster, Ship Smarter",
     excerpt:
-      "Why performance should be the foundation of every component library.",
+      "A step-by-step guide to integrating UiSnap's component library into your Next.js or React project in under 5 minutes.",
     date: "February 2026",
   },
   {
-    slug: "modern-accessibility",
-    title: "Modern Accessibility Practices",
+    slug: "customizing-uisnap",
+    title: "How to Customize UiSnap Components to Match Your Brand",
     excerpt:
-      "How to build inclusive interfaces without sacrificing visual design.",
+      "Learn how to tailor UiSnap's ready-made components with Tailwind CSS, CSS variables, and theming for a unique look.",
     date: "January 2026",
+  },
+  {
+    slug: "design-systems-vs-component-libraries",
+    title: "Design Systems vs. Component Libraries: What UiSnap Gets Right",
+    excerpt:
+      "Understanding the difference and why UiSnap strikes the perfect balance for teams of all sizes.",
+    date: "December 2025",
+  },
+  {
+    slug: "accessibility-built-in",
+    title: "Accessibility by Default: How UiSnap Saves You Compliance Headaches",
+    excerpt:
+      "Every UiSnap component ships with WCAG 2.1 compliance built-in. Here's what that means for your next project.",
+    date: "November 2025",
+  },
+  {
+    slug: "from-scratch-to-snap",
+    title: "From Scratch to Snap: One Developer's Journey to Faster UI Development",
+    excerpt:
+      "How switching from custom-built components to UiSnap reduced our development time by 60% and improved consistency.",
+    date: "October 2025",
   },
 ];
 
@@ -42,8 +63,7 @@ export default function BlogPage() {
           UiSnap Blog
         </h1>
         <p className="text-neutral-400 max-w-2xl mx-auto text-lg">
-          Insights, tutorials, and product updates to help you build better
-          user interfaces.
+          Tips, tutorials, and updates to help you build faster with our ready-made component library.
         </p>
       </section>
 
@@ -53,7 +73,7 @@ export default function BlogPage() {
         {posts.map((post) => (
           <Link
             key={post.slug}
-            href={`/blog`}
+            href={`/blog/${post.slug}`}
             className="group bg-neutral-900 border border-white/10 p-8 rounded-2xl hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
           >
             <p className="text-xs text-neutral-500 mb-4">
@@ -79,16 +99,16 @@ export default function BlogPage() {
       {/* CTA Section */}
       <section className="text-center mt-28">
         <h2 className="text-2xl font-semibold mb-6">
-          Want more insights?
+          Ready to build faster?
         </h2>
         <p className="text-neutral-400 mb-8">
-          Stay updated with the latest UI patterns and design trends.
+          Explore 200+ ready-made components and start shipping in minutes.
         </p>
         <Link
-          href="/"
+          href="/components"
           className="inline-block bg-amber-500 text-black px-6 py-3 rounded-lg font-medium hover:bg-amber-400 transition"
         >
-          Explore Components
+          Browse Component Library
         </Link>
       </section>
 
